@@ -1397,6 +1397,21 @@ const app = {
         itemsView.classList.remove('hidden');
         footer.classList.remove('hidden');
 
+        // Auth-gate: show lock prompt when not signed in, hide payment button and delivery form
+        const authRequired = document.getElementById('cart-auth-required');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        const deliverySection = document.getElementById('cart-delivery-section');
+
+        if (!this.state.currentUser) {
+            if (authRequired) authRequired.classList.remove('hidden');
+            if (checkoutBtn) checkoutBtn.classList.add('hidden');
+            if (deliverySection) deliverySection.classList.add('hidden');
+        } else {
+            if (authRequired) authRequired.classList.add('hidden');
+            if (checkoutBtn) checkoutBtn.classList.remove('hidden');
+            if (deliverySection) deliverySection.classList.remove('hidden');
+        }
+
         // Draw items
         const list = document.getElementById('cart-items-list');
         list.innerHTML = '';

@@ -913,6 +913,9 @@
 
                 <hr class="drawer-divider">
 
+                <!-- Auth-gated delivery section -->
+                <div id="cart-delivery-section">
+
                 <!-- Community Dispatch Scheduler -->
                 <div class="cart-delivery-scheduler">
                     <h3>
@@ -971,6 +974,7 @@
                     <textarea id="cart-delivery-address" rows="2" placeholder="Type your delivery society, tower, flat number..." required></textarea>
                     <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600; display:block; margin-top:6px;">⚠️ Online Prepaid only • Cash on Delivery (COD) not supported</span>
                 </div>
+                </div><!-- end cart-delivery-section -->
             </div>
         </div>
 
@@ -999,6 +1003,17 @@
                 </div>
             </div>
 
+            <!-- Auth-required notice (shown when logged out) -->
+            <div id="cart-auth-required" class="hidden" style="background:rgba(255,165,0,0.08); border:1px solid rgba(255,165,0,0.35); border-radius:var(--radius-md); padding:14px; text-align:center; margin-bottom:12px;">
+                <span class="material-symbols-outlined" style="font-size:1.6rem; color:var(--accent); display:block; margin-bottom:6px;">lock_person</span>
+                <p style="font-size:0.85rem; font-weight:700; color:var(--text-primary); margin-bottom:4px;">Sign In to Proceed</p>
+                <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:12px;">Your cart items are saved. Please sign in or register to complete your prepaid booking.</p>
+                <button class="btn btn-primary btn-full" onclick="document.getElementById('cart-drawer-overlay').classList.remove('open'); document.getElementById('cart-drawer').classList.remove('open'); app.navigateTo('auth-view');">
+                    Sign In / Register
+                </button>
+            </div>
+
+            <!-- Proceed to Pay (shown only when logged in) -->
             <button class="btn btn-primary btn-large btn-full" id="checkout-btn">
                 Proceed to Pay
             </button>
