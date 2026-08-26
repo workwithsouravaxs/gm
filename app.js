@@ -303,6 +303,9 @@ const app = {
         this.renderOrders();
         this.renderAdmin();
 
+        // Start automatic session checking interval
+        setInterval(() => this.checkSessionTimeout(), 1000);
+
         // Start automatic hero banner slide rotation
         this.startCarouselRotation();
 
@@ -977,6 +980,7 @@ const app = {
 
         this.state.users.push(newUser);
         this.state.currentUser = newUser;
+        localStorage.setItem('gudiyamart_sessionStart', Date.now());
         this.saveToStorage();
 
         this.showToast(isPromoEligible
@@ -1062,6 +1066,7 @@ const app = {
         }
 
         this.state.currentUser = user;
+        localStorage.setItem('gudiyamart_sessionStart', Date.now());
         this.saveToStorage();
         this.showToast(`Welcome back, ${user.name}!`, "success");
 
@@ -1083,6 +1088,7 @@ const app = {
     handleLogout() {
         this.state.currentUser = null;
         this.state.cart = []; // Empty cart on logout
+        localStorage.removeItem('gudiyamart_sessionStart');
         this.saveToStorage();
         this.showToast("Signed out successfully", "info");
 
@@ -1597,6 +1603,19 @@ const app = {
         authAlert.classList.add('hidden');
         dashboard.classList.remove('hidden');
 
+        // Populate User Profile details completely
+        const user = this.state.currentUser;
+        const joinedDateStr = new Date(user.joinedAt).toLocaleDateString('en-IN', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+        document.getElementById('profile-display-name').textContent = user.name;
+        document.getElementById('profile-display-email').textContent = user.email;
+        document.getElementById('profile-display-phone').textContent = user.phone;
+        document.getElementById('profile-display-address').textContent = user.address;
+        document.getElementById('profile-display-date').textContent = `Joined ${joinedDateStr}`;
+
         const activeList = document.getElementById('active-orders-list');
         const pastList = document.getElementById('past-orders-list');
 
@@ -1711,13 +1730,23 @@ const app = {
                     ${trackerHtml}
                 </div>
                 
-                <div class="order-card-footer">
-                    <div class="order-address-box">
+                <div class="order-card-footer" style="flex-wrap: wrap; gap: 12px;">
+                    <div class="order-address-box" style="flex-grow: 1;">
                         <span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:middle;">home</span> 
                         Address: ${this.escapeHTML(o.deliveryAddress)}
                     </div>
-                    <div class="order-total-price">
-                        Paid: ₹${o.total}
+                    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                        <div class="order-total-price">
+                            Paid: ₹${o.total}
+                        </div>
+                        ${o.status === 'Pending' || o.status === 'Packing' ? `
+                            <button class="btn btn-danger btn-sm" onclick="app.cancelActiveOrder('${o.id}')" style="height:32px; padding:6px 12px; font-size:0.75rem;">Cancel Booking</button>
+                        ` : ''}
+                        ${o.status === 'Delivered' || o.status === 'Cancelled' ? `
+                            <button class="btn btn-secondary btn-sm" onclick="app.reorderItems('${o.id}')" style="height:32px; padding:6px 12px; font-size:0.75rem; display: flex; align-items: center; gap: 4px;">
+                                <span class="material-symbols-outlined" style="font-size:0.95rem;">replay</span> Reorder
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -2206,6 +2235,130 @@ const app = {
         this.renderAdmin();
         this.renderOrders();
         this.updatePromoSpotsCount();
+    },
+
+    checkSessionTimeout() {
+        if (!this.state.currentUser) return;
+        const sessionStart = localStorage.getItem('gudiyamart_sessionStart');
+        if (!sessionStart) {
+            this.handleLogout();
+            return;
+        }
+
+        const elapsedMs = Date.now() - parseInt(sessionStart);
+        const limitMs = 30 * 60 * 1000; // 30 minutes
+        const remainingMs = limitMs - elapsedMs;
+
+        if (remainingMs <= 0) {
+            this.showToast("Your session has expired (30 minutes session limit). Please log in again.", "warning");
+            this.handleLogout();
+        } else {
+            const minutes = Math.floor(remainingMs / 60000);
+            const seconds = Math.floor((remainingMs % 60000) / 1000);
+            const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            const sessionEl = document.getElementById('session-time-left');
+            if (sessionEl) {
+                sessionEl.textContent = `Session: ${timeStr}`;
+            }
+        }
+    },
+
+    cancelActiveOrder(orderId) {
+        if (!confirm("Are you sure you want to cancel this harvest delivery booking?")) return;
+
+        const order = this.state.orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        order.status = 'Cancelled';
+
+        // Restore product stock in the state
+        order.items.forEach(item => {
+            const prod = this.state.products.find(p => p.id === item.productId);
+            if (prod) {
+                prod.stock = parseFloat((prod.stock + item.quantity).toFixed(2));
+                prod.sales = parseFloat((prod.sales - item.quantity).toFixed(2));
+
+                // Sync back to Supabase database
+                this.supabase.request(`gudiyamart_products?id=eq.${encodeURIComponent(prod.id)}`, 'PATCH', {
+                    stock: prod.stock,
+                    sales: prod.sales
+                });
+            }
+        });
+
+        // Sync order status to Supabase database
+        this.supabase.request(`gudiyamart_orders?id=eq.${encodeURIComponent(orderId)}`, 'PATCH', {
+            status: 'Cancelled'
+        }).then(res => {
+            if (res) console.log(`Order #${orderId} cancellation synced to Supabase!`);
+        });
+
+        this.saveToStorage();
+        this.showToast("Harvest booking cancelled successfully.", "info");
+
+        // Re-render
+        this.renderOrders();
+        this.renderAdmin();
+        this.renderShop();
+    },
+
+    reorderItems(orderId) {
+        const order = this.state.orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        let addedCount = 0;
+        order.items.forEach(item => {
+            const prod = this.state.products.find(p => p.id === item.productId);
+            if (prod) {
+                // Add item to cart
+                const existing = this.state.cart.find(c => c.productId === item.productId);
+                if (existing) {
+                    existing.quantity = Math.min(prod.stock, existing.quantity + item.quantity);
+                } else {
+                    this.state.cart.push({
+                        productId: item.productId,
+                        quantity: Math.min(prod.stock, item.quantity)
+                    });
+                }
+                addedCount++;
+            }
+        });
+
+        this.saveToStorage();
+        this.showToast(`Added ${addedCount} items from previous order to your cart.`, "success");
+
+        // Open cart drawer
+        document.getElementById('cart-drawer-overlay').classList.add('open');
+        document.getElementById('cart-drawer').classList.add('open');
+        this.renderCart();
+    },
+
+    submitFeedback(e) {
+        e.preventDefault();
+        const feedbackText = document.getElementById('feedback-text').value.trim();
+        if (!feedbackText) return;
+
+        const user = this.state.currentUser;
+        const feedback = {
+            id: 'fb-' + Math.random().toString(36).substring(2, 9),
+            user_name: user ? user.name : 'Guest Customer',
+            user_email: user ? user.email : 'guest@gudiyamart.com',
+            content: feedbackText,
+            created_at: new Date().toISOString()
+        };
+
+        // Post to Supabase database asynchronously
+        this.supabase.request('gudiyamart_feedback', 'POST', feedback).then(res => {
+            if (res) console.log("Feedback synced to Supabase successfully!", res);
+        });
+
+        // Store locally just in case
+        const storedFeedbacks = JSON.parse(localStorage.getItem('gudiyamart_feedbacks') || '[]');
+        storedFeedbacks.push(feedback);
+        localStorage.setItem('gudiyamart_feedbacks', JSON.stringify(storedFeedbacks));
+
+        this.showToast("Thank you for your appreciation! It keeps our farm sourcing team motivated.", "success");
+        document.getElementById('appreciation-feedback-form').reset();
     }
 };
 

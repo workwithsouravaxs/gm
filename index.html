@@ -472,6 +472,41 @@
 
                 <!-- Logged In Orders List -->
                 <div class="orders-dashboard hidden" id="orders-dashboard-content">
+                    <!-- Customer Profile Section -->
+                    <div class="customer-profile-card">
+                        <div class="profile-header">
+                            <div class="profile-avatar">
+                                <span class="material-symbols-outlined">account_circle</span>
+                            </div>
+                            <div class="profile-meta">
+                                <h3 id="profile-display-name">Customer Name</h3>
+                                <span class="profile-badge">Verified Local Member</span>
+                            </div>
+                            <div class="session-timer-badge">
+                                <span class="material-symbols-outlined">timer</span>
+                                <span id="session-time-left">Session: 30:00</span>
+                            </div>
+                        </div>
+                        <div class="profile-details-grid">
+                            <div class="profile-detail-item">
+                                <span class="detail-label">Email Address</span>
+                                <span class="detail-value" id="profile-display-email">customer@example.com</span>
+                            </div>
+                            <div class="profile-detail-item">
+                                <span class="detail-label">Phone Number</span>
+                                <span class="detail-value" id="profile-display-phone">9999999999</span>
+                            </div>
+                            <div class="profile-detail-item">
+                                <span class="detail-label">Delivery Address</span>
+                                <span class="detail-value" id="profile-display-address">Society Address Details</span>
+                            </div>
+                            <div class="profile-detail-item">
+                                <span class="detail-label">Joined Date</span>
+                                <span class="detail-value" id="profile-display-date">Joined Aug 2026</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="order-stats-bar">
                         <div class="order-stat-card">
                             <span class="stat-num" id="user-total-orders">0</span>
@@ -963,6 +998,30 @@
         </div>
     </div>
 
+    <!-- Health Vision & Customer Feedback Section -->
+    <section class="feedback-vision-section container">
+        <div class="feedback-vision-card">
+            <div class="vision-content">
+                <span class="material-symbols-outlined vision-icon">spa</span>
+                <h3>Our Health Sourcing Vision</h3>
+                <p>We aim to send you fresh, chemical-free vegetables and fruits to make sure your health is our priority.</p>
+            </div>
+            <div class="feedback-divider"></div>
+            <div class="feedback-form-wrapper">
+                <h3>Appreciate Our Initiative</h3>
+                <p>Share your experience or words of encouragement with our farm sourcing team!</p>
+                <form id="appreciation-feedback-form" onsubmit="app.submitFeedback(event)">
+                    <div class="feedback-input-group">
+                        <textarea id="feedback-text" placeholder="Appreciate our initiative or share what you feel about us..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <span class="material-symbols-outlined" style="font-size:0.95rem; vertical-align:middle; margin-right:4px;">send</span> Send Appreciation
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
     <!-- Authentic Footer & Trust Badge Integrations -->
     <footer class="main-footer">
         <div class="footer-container">
@@ -987,7 +1046,17 @@
             </div>
 
             <div class="footer-links">
-                <h4>Operations</h4>
+                <h4>Support & Operations</h4>
+                <a href="https://wa.me/917672048441?text=Hello%20Gudiya%20Mart%20Support,%20I%20need%20help." 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   class="footer-whatsapp-support-btn" 
+                   style="display: flex; align-items: center; gap: 8px; color: var(--primary); font-weight: 700; text-decoration: none; margin-bottom: 12px; font-size: 0.9rem;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M12.031 2C6.479 2 2 6.479 2 12.031c0 1.936.549 3.738 1.498 5.278l-1.077 3.931 4.07-1.066c1.472.898 3.195 1.42 5.04 1.42 5.552 0 10.03-4.479 10.03-10.031S17.583 2 12.031 2zm0 17.186c-1.63 0-3.149-.45-4.478-1.229l-.32-.187-2.42.635.646-2.359-.206-.328c-.85-1.353-1.301-2.91-1.301-4.524 0-4.478 3.644-8.122 8.122-8.122 4.479 0 8.122 3.644 8.122 8.122 0 4.479-3.643 8.122-8.122 8.122zM15.938 13.06c-.216-.108-1.277-.63-1.473-.7-.196-.07-.339-.108-.48.108-.14.216-.549.7-.674.843-.125.143-.249.162-.465.054-.216-.108-.913-.336-1.739-1.073-.642-.572-1.076-1.278-1.201-1.494-.125-.216-.013-.333.094-.44.097-.097.216-.249.324-.374.108-.125.144-.216.216-.36.072-.143.036-.27-.018-.378-.054-.108-.48-1.156-.658-1.583-.173-.418-.363-.36-.48-.366h-.409c-.143 0-.374.054-.57.266-.196.216-.749.73-.749 1.782 0 1.053.766 2.072.873 2.214.108.143 1.507 2.296 3.649 3.22.509.22.906.35 1.217.449.512.162.977.139 1.345.084.41-.06 1.277-.522 1.458-1.026.18-.504.18-.936.126-1.026-.055-.09-.2-.143-.416-.251z"/>
+                    </svg>
+                    <span>WhatsApp Support: 7672048441</span>
+                </a>
                 <button class="footer-admin-link" onclick="app.navigateTo('admin-view')">
                     <span class="material-symbols-outlined">shield_person</span> Sourcing & Fulfillment Panel
                 </button>
@@ -1047,6 +1116,18 @@
             <span class="nav-label">Profile</span>
         </button>
     </nav>
+
+    <!-- Floating WhatsApp Support Widget -->
+    <a href="https://wa.me/917672048441?text=Hello%20Gudiya%20Mart%20Support,%20I%20need%20help%20with%20my%20order." 
+       class="floating-whatsapp-widget" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       title="WhatsApp Support">
+        <svg class="whatsapp-svg" viewBox="0 0 24 24" width="28" height="28" fill="#FFFFFF">
+            <path d="M12.031 2C6.479 2 2 6.479 2 12.031c0 1.936.549 3.738 1.498 5.278l-1.077 3.931 4.07-1.066c1.472.898 3.195 1.42 5.04 1.42 5.552 0 10.03-4.479 10.03-10.031S17.583 2 12.031 2zm0 17.186c-1.63 0-3.149-.45-4.478-1.229l-.32-.187-2.42.635.646-2.359-.206-.328c-.85-1.353-1.301-2.91-1.301-4.524 0-4.478 3.644-8.122 8.122-8.122 4.479 0 8.122 3.644 8.122 8.122 0 4.479-3.643 8.122-8.122 8.122zM15.938 13.06c-.216-.108-1.277-.63-1.473-.7-.196-.07-.339-.108-.48.108-.14.216-.549.7-.674.843-.125.143-.249.162-.465.054-.216-.108-.913-.336-1.739-1.073-.642-.572-1.076-1.278-1.201-1.494-.125-.216-.013-.333.094-.44.097-.097.216-.249.324-.374.108-.125.144-.216.216-.36.072-.143.036-.27-.018-.378-.054-.108-.48-1.156-.658-1.583-.173-.418-.363-.36-.48-.366h-.409c-.143 0-.374.054-.57.266-.196.216-.749.73-.749 1.782 0 1.053.766 2.072.873 2.214.108.143 1.507 2.296 3.649 3.22.509.22.906.35 1.217.449.512.162.977.139 1.345.084.41-.06 1.277-.522 1.458-1.026.18-.504.18-.936.126-1.026-.055-.09-.2-.143-.416-.251z"/>
+        </svg>
+        <span class="whatsapp-badge-pulsing"></span>
+    </a>
 
     <!-- Notification Toast -->
     <div class="toast-container" id="toast-container"></div>

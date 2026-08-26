@@ -3316,5 +3316,274 @@ textarea:focus-visible {
     }
 }
 
+/* ==========================================================================
+   CUSTOMER PROFILE, WHATSAPP WIDGET & VISION FEEDBACK STYLING
+   ========================================================================== */
+
+/* 1. Customer Profile Dashboard Card */
+.customer-profile-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-hover) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.profile-avatar span {
+    font-size: 3.2rem;
+    color: var(--primary);
+}
+
+.profile-meta {
+    flex-grow: 1;
+}
+
+.profile-meta h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.profile-badge {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(45, 90, 39, 0.12);
+}
+
+.session-timer-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--accent-light);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 800;
+    border: 1px dashed var(--accent);
+}
+
+.session-timer-badge span {
+    font-size: 1.1rem;
+}
+
+.profile-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.profile-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-detail-item .detail-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.profile-detail-item .detail-value {
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    word-break: break-all;
+}
+
+/* 2. Feedback & Sourcing Vision Section */
+.feedback-vision-section {
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.feedback-vision-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 32px;
+    display: flex;
+    align-items: stretch;
+    gap: 32px;
+    box-shadow: var(--shadow-md);
+}
+
+.vision-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.vision-icon {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 16px;
+    font-variation-settings: 'FILL' 1;
+}
+
+.vision-content h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.vision-content p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.feedback-divider {
+    width: 1px;
+    background-color: var(--border);
+}
+
+.feedback-form-wrapper {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+}
+
+.feedback-form-wrapper h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+
+.feedback-form-wrapper p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.feedback-input-group textarea {
+    width: 100%;
+    height: 80px;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.88rem;
+    resize: none;
+    outline: none;
+    transition: var(--transition-fast);
+    margin-bottom: 12px;
+}
+
+.feedback-input-group textarea:focus {
+    border-color: var(--primary);
+    background-color: var(--bg-card);
+    box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.08);
+}
+
+/* 3. Floating WhatsApp Widget */
+.floating-whatsapp-widget {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 56px;
+    height: 56px;
+    background-color: #25D366;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35);
+    z-index: 180;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
+    text-decoration: none;
+}
+
+.floating-whatsapp-widget:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
+}
+
+.floating-whatsapp-widget:active {
+    transform: scale(0.95);
+}
+
+.whatsapp-badge-pulsing {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 14px;
+    height: 14px;
+    background-color: var(--accent);
+    border-radius: 50%;
+    border: 2px solid #FFFFFF;
+    animation: whatsapp-badge-pulse 2s infinite;
+}
+
+@keyframes whatsapp-badge-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(204, 77, 41, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(204, 77, 41, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(204, 77, 41, 0);
+    }
+}
+
+/* Mobile adjustments for widgets */
+@media (max-width: 768px) {
+    .floating-whatsapp-widget {
+        bottom: 82px; /* Positioned above the mobile bottom nav bar */
+        right: 16px;
+        width: 48px;
+        height: 48px;
+    }
+    
+    .feedback-vision-card {
+        flex-direction: column;
+        padding: 24px;
+        gap: 20px;
+    }
+    
+    .feedback-divider {
+        width: 100%;
+        height: 1px;
+    }
+    
+    .vision-content h3 {
+        font-size: 1.35rem;
+    }
+    
+    .vision-icon {
+        font-size: 2.4rem;
+        margin-bottom: 8px;
+    }
+}
+
 
 
