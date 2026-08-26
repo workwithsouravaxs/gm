@@ -1602,10 +1602,16 @@ const app = {
         this.state.cart = []; // Empty cart immediately
         this.saveToStorage();
 
-        // Write to Supabase database asynchronously
+        // Write to Supabase database — await and log errors so we know if it fails
         const dbOrder = this.mapOrderToDB(newOrder);
         this.supabase.request('gudiyamart_orders', 'POST', dbOrder).then(res => {
-            if (res) console.log("Order saved to database as unpaid.", res);
+            if (res && Array.isArray(res) && res.length > 0) {
+                console.log("✅ Order saved to Supabase as Unpaid:", res[0].id);
+            } else {
+                console.error("❌ Supabase order insert returned unexpected response:", res);
+            }
+        }).catch(err => {
+            console.error("❌ Supabase order insert failed:", err);
         });
 
         // Close cart drawer & update views
@@ -2451,51 +2457,86 @@ const app = {
 
         if (!cfOrderId) return;
 
-        this.showToast("Confirming Cashfree transaction status...", "info");
+        this.showToast("Confirming your payment status...", "info");
 
         try {
             const response = await fetch(`./api/verify?orderId=${encodeURIComponent(cfOrderId)}`);
             const data = await response.json();
 
             if (!response.ok) {
-                this.showToast(data.error || "Could not confirm Cashfree payment status.", "error");
+                this.showToast(data.error || "Could not confirm payment status.", "error");
+                // Still clean URL and go to orders
+                const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+                this.navigateTo('orders-view');
                 return;
             }
 
             // Check if status returned is PAID
             if (data.orderStatus === 'PAID') {
-                // Find order in local state and update
-                const order = this.state.orders.find(o => o.id === cfOrderId);
-                if (order) {
-                    order.paymentStatus = 'Paid';
-                    order.paymentMethod = data.paymentMethod || 'Cashfree Web';
-                    order.transactionId = data.transactionId || 'CF_UNKNOWN';
-                    this.saveToStorage();
-                }
-
-                // Sync status change directly to Supabase
-                await this.supabase.request(`gudiyamart_orders?id=eq.${encodeURIComponent(cfOrderId)}`, 'PATCH', {
+                const paidPayload = {
                     payment_status: 'Paid',
                     payment_method: data.paymentMethod || 'Cashfree Web',
                     transaction_id: data.transactionId || 'CF_UNKNOWN'
-                });
+                };
 
-                this.showToast(`Prepaid booking confirmed successfully! ID: ${data.transactionId}`, "success");
+                // 1. Patch Supabase with the confirmed payment details
+                const patchRes = await this.supabase.request(
+                    `gudiyamart_orders?id=eq.${encodeURIComponent(cfOrderId)}`,
+                    'PATCH',
+                    paidPayload
+                );
+                console.log("✅ Supabase order payment patch result:", patchRes);
+
+                // 2. Update the local state copy too (if found)
+                const localOrder = this.state.orders.find(o => o.id === cfOrderId);
+                if (localOrder) {
+                    localOrder.paymentStatus = 'Paid';
+                    localOrder.paymentMethod = data.paymentMethod || 'Cashfree Web';
+                    localOrder.transactionId = data.transactionId || 'CF_UNKNOWN';
+                } else {
+                    // Order not in local state (e.g. cleared after page redirect)
+                    // Force a fresh full sync from Supabase to pick it up
+                    console.warn("Order not found in local state. Forcing Supabase re-sync...");
+                    await this.syncFromSupabase();
+                }
+
+                this.saveToStorage();
+                this.showToast(`Payment confirmed! 🎉 Order #${cfOrderId} is now active.`, "success");
+
+            } else if (data.orderStatus === 'FAILED') {
+                // Payment failed: update Supabase order status to Cancelled
+                await this.supabase.request(
+                    `gudiyamart_orders?id=eq.${encodeURIComponent(cfOrderId)}`,
+                    'PATCH',
+                    { status: 'Cancelled', payment_status: 'Failed' }
+                );
+                const failedOrder = this.state.orders.find(o => o.id === cfOrderId);
+                if (failedOrder) {
+                    failedOrder.status = 'Cancelled';
+                    failedOrder.paymentStatus = 'Failed';
+                    this.saveToStorage();
+                }
+                this.showToast(`Payment failed. Order #${cfOrderId} has been cancelled. Please try again.`, "error");
+
             } else {
-                this.showToast(`Prepaid transaction was not completed: Status ${data.orderStatus}`, "warning");
+                this.showToast(`Payment not completed yet. Status: ${data.orderStatus}. If you paid, it may take a moment to confirm.`, "warning");
             }
 
-            // Clear URL parameters to prevent multiple verification prompts on page reload
+            // Clean URL parameters to prevent duplicate verify on page reload
             const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
 
-            // Redirect customer to My Deliveries
+            // Navigate customer to My Deliveries and refresh all views
             this.navigateTo('orders-view');
             this.renderOrders();
+            this.renderAdmin();
 
         } catch (err) {
             console.error("Cashfree verification redirect callback error:", err);
-            this.showToast("Failed to verify transaction.", "error");
+            this.showToast("Failed to verify payment. Please check your My Deliveries tab.", "error");
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
         }
     },
 
