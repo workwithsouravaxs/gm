@@ -4,6 +4,12 @@
  */
 
 const app = {
+    // Cashfree Payments Configuration
+    cashfree: {
+        appId: "1253613138e6b4be383dbac78ce3163521",
+        mode: "production"
+    },
+
     // Supabase REST Configuration
     supabase: {
         url: "https://abobgjnuxejihezxlxdq.supabase.co/rest/v1",
@@ -54,6 +60,9 @@ const app = {
             shipping: order.shipping,
             total: order.total,
             status: order.status,
+            payment_status: order.paymentStatus || 'Unpaid',
+            payment_method: order.paymentMethod || 'None',
+            transaction_id: order.transactionId || 'None',
             created_at: order.orderedAt
         };
     },
@@ -73,6 +82,9 @@ const app = {
             shipping: Number(dbOrder.shipping),
             total: Number(dbOrder.total),
             status: dbOrder.status,
+            paymentStatus: dbOrder.payment_status || 'Unpaid',
+            paymentMethod: dbOrder.payment_method || 'None',
+            transactionId: dbOrder.transaction_id || 'None',
             orderedAt: dbOrder.created_at
         };
     },
@@ -1567,26 +1579,9 @@ const app = {
             orderedAt: new Date().toISOString()
         };
 
-        this.state.orders.push(newOrder);
-        this.state.cart = []; // Empty cart
-        this.saveToStorage();
-
-        // Write to Supabase database asynchronously
-        const dbOrder = this.mapOrderToDB(newOrder);
-        this.supabase.request('gudiyamart_orders', 'POST', dbOrder).then(res => {
-            if (res) console.log("Order synced to Supabase database successfully!", res);
-        });
-
-        this.showToast("Order booked successfully! Real-time logistics tracks under 'My Deliveries'.", "success");
-
-        // Close cart drawer
-        document.getElementById('cart-drawer-overlay').classList.remove('open');
-        document.getElementById('cart-drawer').classList.remove('open');
-
-        // Refresh views
-        this.renderShop();
-        this.renderCart();
-        this.navigateTo('orders-view');
+        // Reroute order completion through Cashfree Gateway Checkout
+        this.state.tempOrder = newOrder;
+        this.openCashfreeCheckout(newOrder);
     },
 
     // Render User orders list screen
@@ -1736,8 +1731,9 @@ const app = {
                         Address: ${this.escapeHTML(o.deliveryAddress)}
                     </div>
                     <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                        <div class="order-total-price">
-                            Paid: ₹${o.total}
+                        <div style="text-align: right;">
+                            <div class="order-total-price">Paid: ₹${o.total}</div>
+                            <div style="font-size:0.68rem; color:#119a7e; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">via Cashfree (${o.paymentMethod || 'UPI'})</div>
                         </div>
                         ${o.status === 'Pending' || o.status === 'Packing' ? `
                             <button class="btn btn-danger btn-sm" onclick="app.cancelActiveOrder('${o.id}')" style="height:32px; padding:6px 12px; font-size:0.75rem;">Cancel Booking</button>
@@ -1870,7 +1866,11 @@ const app = {
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${itemsSummary}">${itemsSummary}</td>
                 <td><span class="slot-badge">${this.escapeHTML(o.deliverySlot)}</span></td>
                 <td style="max-width: 200px; font-size:0.8rem;" title="${this.escapeHTML(o.deliveryAddress)}">${this.escapeHTML(o.deliveryAddress)}</td>
-                <td><strong>₹${o.total}</strong></td>
+                <td>
+                    <strong>₹${o.total}</strong>
+                    <div style="font-size:0.72rem; color:#119a7e; font-weight:700;">${o.paymentStatus === 'Paid' ? `Paid (${o.paymentMethod})` : 'Unpaid'}</div>
+                    ${o.transactionId && o.transactionId !== 'None' ? `<div style="font-size:0.65rem; color:var(--text-muted); font-family:monospace; line-height:1; margin-top:2px;">${o.transactionId}</div>` : ''}
+                </td>
                 <td>${statusBadge}</td>
                 <td><div class="table-actions">${actionsHtml}</div></td>
             `;
@@ -2359,6 +2359,93 @@ const app = {
 
         this.showToast("Thank you for your appreciation! It keeps our farm sourcing team motivated.", "success");
         document.getElementById('appreciation-feedback-form').reset();
+    },
+
+    openCashfreeCheckout(order) {
+        document.getElementById('cf-order-id').textContent = order.id;
+        document.getElementById('cf-customer-name').textContent = order.userName;
+        document.getElementById('cf-total-amount').textContent = '₹' + order.total;
+
+        // Reset display states inside checkout modal
+        this.switchCFMethod('cf-upi');
+        document.getElementById('cf-processor').classList.add('hidden');
+        document.getElementById('cf-card-form').reset();
+
+        document.getElementById('cashfree-overlay').classList.add('open');
+    },
+
+    closeCashfreeCheckout() {
+        document.getElementById('cashfree-overlay').classList.remove('open');
+        this.state.tempOrder = null;
+        this.showToast("Payment checkout cancelled.", "warning");
+    },
+
+    switchCFMethod(methodId) {
+        // Toggle tab highlights
+        document.querySelectorAll('.cashfree-methods-tabs .cf-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        if (methodId === 'cf-upi') {
+            document.getElementById('cf-tab-upi').classList.add('active');
+        } else {
+            document.getElementById('cf-tab-card').classList.add('active');
+        }
+
+        // Toggle screen visibility
+        document.querySelectorAll('.cf-method-screen').forEach(scr => {
+            scr.classList.remove('active-method');
+        });
+        document.getElementById(methodId).classList.add('active-method');
+    },
+
+    processCFPayment(method, event = null) {
+        if (event) event.preventDefault();
+
+        // 1. Show Processing Screen overlay (secure banking connection simulation)
+        document.getElementById('cf-processor').classList.remove('hidden');
+
+        // 2. Simulate transaction processing (takes 2.2 seconds)
+        setTimeout(() => {
+            const order = this.state.tempOrder;
+            if (!order) return;
+
+            // Generate simulated transaction ID matching Cashfree standard format
+            const transactionId = 'TXN_CF_' + Math.random().toString(36).substring(2, 11).toUpperCase();
+
+            // Set final transaction details
+            order.paymentMethod = method;
+            order.transactionId = transactionId;
+            order.paymentStatus = 'Paid';
+
+            // Complete Order Booking
+            this.state.orders.push(order);
+            this.state.cart = []; // Empty cart
+            this.saveToStorage();
+
+            // Write to Supabase database asynchronously
+            const dbOrder = this.mapOrderToDB(order);
+            // Append payment fields to the database representation
+            dbOrder.payment_status = 'Paid';
+            dbOrder.payment_method = method;
+            dbOrder.transaction_id = transactionId;
+
+            this.supabase.request('gudiyamart_orders', 'POST', dbOrder).then(res => {
+                if (res) console.log("Cashfree payment order saved to Supabase!", res);
+            });
+
+            this.showToast(`Payment successfully processed via Cashfree! Transaction: ${transactionId}`, "success");
+
+            // Close modal
+            document.getElementById('cashfree-overlay').classList.remove('open');
+            this.state.tempOrder = null;
+
+            // Refresh drawer and navigation
+            document.getElementById('cart-drawer-overlay').classList.remove('open');
+            document.getElementById('cart-drawer').classList.remove('open');
+            this.renderShop();
+            this.renderCart();
+            this.navigateTo('orders-view');
+        }, 2200);
     }
 };
 

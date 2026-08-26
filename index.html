@@ -1129,6 +1129,96 @@
         <span class="whatsapp-badge-pulsing"></span>
     </a>
 
+    <!-- Cashfree Secure Checkout Gateway Modal -->
+    <div class="cashfree-overlay" id="cashfree-overlay">
+        <div class="cashfree-modal">
+            <div class="cashfree-header">
+                <div class="cashfree-logo-row">
+                    <span class="cashfree-badge">SECURE GATEWAY</span>
+                    <span class="cashfree-brand">cashfree <span style="color:#0070F3;">payments</span></span>
+                </div>
+                <button class="cashfree-close" onclick="app.closeCashfreeCheckout()">&times;</button>
+            </div>
+            
+            <div class="cashfree-body">
+                <div class="cashfree-order-summary">
+                    <div class="summary-item">
+                        <span class="lbl">Order ID</span>
+                        <span class="val" id="cf-order-id">GM-123456</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="lbl">Customer</span>
+                        <span class="val" id="cf-customer-name">John Doe</span>
+                    </div>
+                    <div class="summary-price-row">
+                        <span>Amount to Pay</span>
+                        <strong id="cf-total-amount">₹0.00</strong>
+                    </div>
+                </div>
+
+                <div class="cashfree-methods-tabs">
+                    <button class="cf-tab active" id="cf-tab-upi" onclick="app.switchCFMethod('cf-upi')">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">qr_code_scanner</span> UPI / QR Scan
+                    </button>
+                    <button class="cf-tab" id="cf-tab-card" onclick="app.switchCFMethod('cf-card')">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">credit_card</span> Card Payment
+                    </button>
+                </div>
+
+                <!-- UPI Payment Method Screen -->
+                <div class="cf-method-screen active-method" id="cf-upi">
+                    <div class="upi-qr-wrapper">
+                        <div class="upi-qr-placeholder">
+                            <span class="material-symbols-outlined qr-icon">qr_code_2</span>
+                            <div class="qr-scanner-overlay">SCAN TO PAY</div>
+                        </div>
+                        <p class="upi-instructions">Scan this Cashfree QR code using any UPI app (GPay, PhonePe, Paytm) to complete payment.</p>
+                    </div>
+                    <div class="upi-id-input-row">
+                        <input type="text" id="cf-upi-id" placeholder="Enter your UPI ID (e.g., name@okaxis)" value="sourav@paytm">
+                        <button class="btn btn-primary" onclick="app.processCFPayment('UPI')">Verify & Pay</button>
+                    </div>
+                </div>
+
+                <!-- Card Payment Method Screen -->
+                <div class="cf-method-screen" id="cf-card">
+                    <form id="cf-card-form" onsubmit="app.processCFPayment('Card', event)">
+                        <div class="cf-form-group">
+                            <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); margin-bottom:4px; display:block;">Card Number</label>
+                            <input type="text" class="cf-card-input" placeholder="4111 2222 3333 4444" required pattern="[0-9 ]{16,19}" style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); background-color:var(--bg-main); color:var(--text-primary);">
+                        </div>
+                        <div class="cf-form-row" style="display:flex; gap:16px; margin-top:12px;">
+                            <div class="cf-form-group" style="flex:1;">
+                                <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); margin-bottom:4px; display:block;">Expiry Date</label>
+                                <input type="text" class="cf-card-input" placeholder="MM/YY" required pattern="[0-9]{2}/[0-9]{2}" style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); background-color:var(--bg-main); color:var(--text-primary);">
+                            </div>
+                            <div class="cf-form-group" style="flex:1;">
+                                <label style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); margin-bottom:4px; display:block;">CVV</label>
+                                <input type="password" class="cf-card-input" placeholder="***" required pattern="[0-9]{3}" style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border); background-color:var(--bg-main); color:var(--text-primary);">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full" style="margin-top:18px; width:100%;">Pay Securely via Cashfree</button>
+                    </form>
+                </div>
+
+                <!-- Processor Screen (Pulsing secure check) -->
+                <div class="cf-processing-screen hidden" id="cf-processor">
+                    <div class="cf-spinner-wrapper">
+                        <div class="cf-pulsing-circle"></div>
+                        <span class="material-symbols-outlined processor-lock">lock</span>
+                    </div>
+                    <h4>Processing Payment...</h4>
+                    <p>Connecting securely to Cashfree Payments. Do not refresh or press back.</p>
+                </div>
+            </div>
+
+            <div class="cashfree-footer">
+                <span class="material-symbols-outlined" style="font-size:1.1rem; vertical-align:middle; margin-right:4px;">security</span>
+                <span>PCI-DSS Compliant • 256-Bit SSL Secured</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast -->
     <div class="toast-container" id="toast-container"></div>
 
