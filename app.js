@@ -1462,11 +1462,8 @@ const app = {
             floatTotal.textContent = `₹${finalTotal}`;
         }
 
-        // Address synchronization
+        // Address field setup (start empty so they type or select manually)
         const addressTextarea = document.getElementById('cart-delivery-address');
-        if (addressTextarea && !addressTextarea.value && this.state.currentUser) {
-            addressTextarea.value = this.state.currentUser.address;
-        }
 
         // Calculations & Promotions (Rupee System: ₹30 flat shipping)
         const promoActive = this.state.currentUser && this.state.currentUser.isPromoMember;
@@ -2446,6 +2443,18 @@ const app = {
             this.renderCart();
             this.navigateTo('orders-view');
         }, 2200);
+    },
+
+    useSavedProfileAddress() {
+        if (!this.state.currentUser) {
+            this.showToast("Please sign in to load your saved address.", "warning");
+            return;
+        }
+        const addressTextarea = document.getElementById('cart-delivery-address');
+        if (addressTextarea) {
+            addressTextarea.value = this.state.currentUser.address;
+            this.showToast("Loaded saved address from your profile!", "success");
+        }
     }
 };
 

@@ -960,9 +960,13 @@
                 <hr class="drawer-divider">
 
                 <!-- Delivery Address -->
-                <div class="cart-address-wrapper">
-                    <label for="cart-delivery-address"><strong>Verify Sourcing Address:</strong></label>
-                    <textarea id="cart-delivery-address" rows="2" placeholder="Confirm your street, building, flat number..."></textarea>
+                <div class="cart-address-wrapper" style="margin-top: 16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                        <label for="cart-delivery-address"><strong>Delivery Location:</strong></label>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-use-saved-address" style="padding: 4px 8px; font-size: 0.72rem; height: auto;" onclick="app.useSavedProfileAddress()">Use Saved Address</button>
+                    </div>
+                    <textarea id="cart-delivery-address" rows="2" placeholder="Type your delivery society, tower, flat number..." required></textarea>
+                    <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600; display:block; margin-top:6px;">⚠️ Online Prepaid only • Cash on Delivery (COD) not supported</span>
                 </div>
             </div>
         </div>
@@ -993,7 +997,7 @@
             </div>
 
             <button class="btn btn-primary btn-large btn-full" id="checkout-btn">
-                Confirm Harvest Booking
+                Proceed to Pay
             </button>
         </div>
     </div>
