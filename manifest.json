@@ -1,0 +1,23 @@
+{
+  "name": "Gudiya Mart - Farm-Fresh Organic Sourcing",
+  "short_name": "Gudiya Mart",
+  "description": "Order authentic, farm-fresh organic vegetables directly sourced from local family farms.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fbfaf7",
+  "theme_color": "#2d5a27",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=192&h=192&fit=crop&auto=format",
+      "type": "image/jpeg",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=512&h=512&fit=crop&auto=format",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

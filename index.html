@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gudiya Mart | Authentic Farm-Fresh Organic Vegetables</title>
+    <!-- Meta tags for SEO -->
+    <meta name="description" content="Order authentic, farm-fresh organic vegetables from Gudiya Mart. Sourced directly from local farmers and delivered via our eco-friendly community delivery system.">
+    <meta name="theme-color" content="#2d5a27">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gudiyamart.com">
+    <meta property="og:title" content="Gudiya Mart | Authentic Farm-Fresh Organic Vegetables">
+    <meta property="og:description" content="Order organic vegetables direct from local family farms. Sourced and delivered in community-consolidated trucks to preserve peak freshness and cut emissions.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&auto=format&fit=crop&q=80">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://gudiyamart.com">
+    <meta name="twitter:title" content="Gudiya Mart | Authentic Farm-Fresh Organic Vegetables">
+    <meta name="twitter:description" content="Order organic vegetables direct from local family farms. Sourced and delivered in community-consolidated trucks to preserve peak freshness and cut emissions.">
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&auto=format&fit=crop&q=80">
+
+    <!-- PWA Manifest & Icons -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=192&h=192&fit=crop&auto=format">
+
+    <!-- Preloading stylesheets for performance -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="app.js" as="script">
+
+    <!-- Google Fonts & Symbols Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    
+    <!-- Custom Style sheet -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Structured Data JSON-LD Schema (SEO Rich Snippets) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Gudiya Mart",
+      "image": "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&auto=format&fit=crop&q=80",
+      "description": "Consolidated route scheduling bringing dawn-harvested fresh greens straight from farmers to community society hubs daily.",
+      "@id": "https://gudiyamart.com/#store",
+      "url": "https://gudiyamart.com",
+      "telephone": "+919999999999",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Gudiya Mart Center, Block C",
+        "addressLocality": "Gurugram",
+        "addressRegion": "Haryana",
+        "postalCode": "122001",
+        "addressCountry": "IN"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 28.4595,
+        "longitude": 77.0266
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "07:00",
+        "closes": "21:00"
+      },
+      "sameAs": [
+        "https://facebook.com/gudiyamart",
+        "https://instagram.com/gudiyamart"
+      ]
+    }
+    </script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="#" class="brand" id="nav-brand-logo">
+                <span class="material-symbols-outlined logo-icon">yard</span>
+                <span class="brand-text">Gudiya <span class="accent-text">Mart</span></span>
+            </a>
+            
+            <!-- App-style Location Bar (Instamart/Zepto Style) -->
+            <div class="location-header" id="location-header-bar">
+                <span class="material-symbols-outlined location-icon-pin">location_on</span>
+                <div class="location-text-container">
+                    <span class="location-delivery-lbl">Delivering to</span>
+                    <span class="location-value" id="top-delivery-address">Guest / Sign In to select address</span>
+                </div>
+            </div>
+            
+            <nav class="nav-links-container" id="nav-links">
+                <button class="nav-link active" data-target="shop-view" id="nav-shop">
+                    <span class="material-symbols-outlined">nature_people</span> Shop Fresh
+                </button>
+                <button class="nav-link" data-target="orders-view" id="nav-orders">
+                    <span class="material-symbols-outlined">local_shipping</span> My Deliveries
+                </button>
+                <button class="nav-link auth-btn" data-target="auth-view" id="nav-auth">
+                    <span class="material-symbols-outlined">login</span> <span id="auth-btn-text">Sign In</span>
+                </button>
+            </nav>
+
+            <div class="nav-actions">
+                <button class="icon-btn theme-toggle" id="theme-toggle-btn" aria-label="Toggle Theme">
+                    <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+                </button>
+                <button class="cart-trigger" id="cart-trigger-btn" aria-label="Shopping Cart">
+                    <span class="material-symbols-outlined">shopping_basket</span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </button>
+                <button class="mobile-nav-toggle" id="mobile-menu-btn" aria-label="Toggle Navigation">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Container -->
+    <main class="app-main">
+        
+        <!-- Hero Carousel Banner Section -->
+        <section class="hero-section" id="hero-banner">
+            <div class="carousel-container" id="hero-carousel">
+                <!-- Slide 1 -->
+                <div class="carousel-slide active">
+                    <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1600&auto=format&fit=crop&q=80')"></div>
+                    <div class="hero-overlay"></div>
+                    <div class="hero-content">
+                        <div class="promo-badge-container">
+                            <span class="promo-badge">DIRECT FROM SOURCE</span>
+                        </div>
+                        <h2 class="hero-title">Truly Organic Vegetables, Harvested at Dawn.</h2>
+                        <p class="hero-subtitle">Bypassing storage houses. Sourced from local family farms and delivered in community-consolidated delivery vans to preserve peak freshness.</p>
+                        
+                        <!-- Hero Countdown (Accepting orders starting 28th Aug 2026) -->
+                        <div class="hero-countdown-wrapper">
+                            <div class="countdown-timer">
+                                <div class="time-block">
+                                    <span class="time-num countdown-days">00</span>
+                                    <span class="time-lbl">Days</span>
+                                </div>
+                                <div class="time-colon">:</div>
+                                <div class="time-block">
+                                    <span class="time-num countdown-hours">00</span>
+                                    <span class="time-lbl">Hrs</span>
+                                </div>
+                                <div class="time-colon">:</div>
+                                <div class="time-block">
+                                    <span class="time-num countdown-mins">00</span>
+                                    <span class="time-lbl">Mins</span>
+                                </div>
+                                <div class="time-colon">:</div>
+                                <div class="time-block">
+                                    <span class="time-num countdown-secs">00</span>
+                                    <span class="time-lbl">Secs</span>
+                                </div>
+                            </div>
+                            <span class="countdown-note">Accepting orders on 28th Aug 2026</span>
+                        </div>
+
+                        <button class="btn btn-primary btn-large hero-cta-btn-action">Join Gudiya Mart Today</button>
+                    </div>
+                </div>
+                <!-- Slide 2 -->
+                <div class="carousel-slide">
+                    <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=1600&auto=format&fit=crop&q=80')"></div>
+                    <div class="hero-overlay"></div>
+                    <div class="hero-content">
+                        <div class="promo-badge-container">
+                            <span class="promo-badge">NATURAL SWEETNESS</span>
+                        </div>
+                        <h2 class="hero-title">Juicy Farm-Fresh Fruits, Rich in Nutrition.</h2>
+                        <p class="hero-subtitle">Sun-ripened orchard fruits handpicked and shipped directly, keeping natural flavors and vitamins intact.</p>
+                        
+                        <!-- Hero Countdown (Accepting orders starting 28th Aug 2026) -->
+                        <div class="hero-countdown-wrapper">
+                            <div class="countdown-timer">
+                                <div class="time-block">
+                                    <span class="time-num countdown-days">00</span>
+                                    <span class="time-lbl">Days</span>
+                                </div>
+                                <div class="time-colon">:</div>
+                                <div class="time-block">
+                                    <span class="time-num countdown-hours">00</span>
+                                    <span class="time-lbl">Hrs</span>
+                                </div>
+                                <div class="time-colon">:</div>
+                                <div class="time-block">
+                                    <span class="time-num countdown-mins">00</span>
+                                    <span class="time-lbl">Mins</span>
+                                </div>
+                                <div class="time-colon">:</div>
+                                <div class="time-block">
+                                    <span class="time-num countdown-secs">00</span>
+                                    <span class="time-lbl">Secs</span>
+                                </div>
+                            </div>
+                            <span class="countdown-note">Accepting orders on 28th Aug 2026</span>
+                        </div>
+
+                        <button class="btn btn-primary btn-large hero-cta-btn-action">Explore Fruits</button>
+                    </div>
+                </div>
+                <!-- Slide 3 -->
+                <div class="carousel-slide">
+                    <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1600&auto=format&fit=crop&q=80')"></div>
+                    <div class="hero-overlay"></div>
+                    <div class="hero-content">
+                        <div class="promo-badge-container">
+                            <span class="promo-badge">COMMUNITY IMPACT</span>
+                        </div>
+                        <h2 class="hero-title">Reducing Neighborhood Emissions by 78%</h2>
+                        <p class="hero-subtitle">Our shared delivery slots consolidate routes, bringing organic produce to your society doorstep in one organized eco-friendly trip.</p>
+                        
+                        <!-- Hero Countdown (Accepting orders starting 28th Aug 2026) -->
+                        <div class="hero-countdown-wrapper">
+                            <div class="countdown-timer">
+                                <div class="time-block">
+                                    <span class="time-num countdown-days">00</span>
+                                    <span class="time-lbl">Days</span>
+                                </div>
+                                <div class="time-colon">:</div>
+                                <div class="time-block">
+                                    <span class="time-num countdown-hours">00</span>
+                                    <span class="time-lbl">Hrs</span>
+                                </div>
+                                <div class="time-colon">:</div>
+                                <div class="time-block">
+                                    <span class="time-num countdown-mins">00</span>
+                                    <span class="time-lbl">Mins</span>
+                                </div>
+                                <div class="time-colon">:</div>
+                                <div class="time-block">
+                                    <span class="time-num countdown-secs">00</span>
+                                    <span class="time-lbl">Secs</span>
+                                </div>
+                            </div>
+                            <span class="countdown-note">Accepting orders on 28th Aug 2026</span>
+                        </div>
+
+                        <button class="btn btn-primary btn-large hero-cta-btn-action">Check Slot Timings</button>
+                    </div>
+                </div>
+                
+                <!-- Carousel Controls -->
+                <div class="carousel-dots" id="carousel-dots">
+                    <span class="dot active" data-slide="0"></span>
+                    <span class="dot" data-slide="1"></span>
+                    <span class="dot" data-slide="2"></span>
+                </div>
+            </div>
+            
+            <!-- Launch Offer Card overlaid (static element) -->
+            <div class="hero-promo-container container">
+                <div class="promo-card">
+                    <div class="promo-info">
+                        <span class="material-symbols-outlined promo-icon">workspace_premium</span>
+                        <div class="promo-text">
+                            <h3>Founding Member Initiative</h3>
+                            <p>Be one of the first 100 users in your neighborhood to get <strong>10% OFF</strong> and <strong>FREE delivery</strong> for the entire month.</p>
+                        </div>
+                    </div>
+                    <div class="promo-counter">
+                        <div class="counter-ring">
+                            <svg class="ring-svg" width="70" height="70">
+                                <circle class="ring-bg" cx="35" cy="35" r="30"></circle>
+                                <circle class="ring-fill" id="promo-progress-ring" cx="35" cy="35" r="30"></circle>
+                            </svg>
+                            <span class="counter-number" id="promo-spots-left">100</span>
+                        </div>
+                        <span class="counter-label">Spots Left</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Content Sections -->
+        
+        <!-- 1. SHOP VIEW -->
+        <section id="shop-view" class="view-section active-view">
+            
+            <!-- Trust and Quality Values Section -->
+            <section class="trust-banner container">
+                <div class="trust-grid">
+                    <div class="trust-item">
+                        <span class="material-symbols-outlined trust-icon">history_edu</span>
+                        <div class="trust-content">
+                            <h4>Direct Farm Sourcing</h4>
+                            <p>Harvested daily from Greenfield and Valley Farms, skipping warehouses entirely.</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <span class="material-symbols-outlined trust-icon">eco</span>
+                        <div class="trust-content">
+                            <h4>100% Traceable Organic</h4>
+                            <p>Zero chemical pesticides. QR codes on delivery bags trace back to soil test reports.</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <span class="material-symbols-outlined trust-icon">groups_3</span>
+                        <div class="trust-content">
+                            <h4>Carbon-Neutral Logistics</h4>
+                            <p>Scheduled community drop-offs reduce neighborhood delivery truck emissions by 78%.</p>
+                        </div>
+                    </div>
+                    <div class="trust-item">
+                        <span class="material-symbols-outlined trust-icon">payments</span>
+                        <div class="trust-content">
+                            <h4>Fair Price Guarantee</h4>
+                            <p>We pay farmers 20% above wholesale market rates, supporting local agriculture.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Steps to Order Section -->
+            <section class="order-steps-section container">
+                <div class="steps-header">
+                    <h2>Easy Steps to Order</h2>
+                    <p>Consolidated daily farm-fresh logistics direct to your doorstep</p>
+                </div>
+                <div class="steps-grid">
+                    <div class="step-item">
+                        <div class="step-number-badge">01</div>
+                        <span class="material-symbols-outlined step-item-icon">person_add</span>
+                        <h3>Register yourself</h3>
+                        <p>Create a Gudiya Mart account in seconds with your active delivery address.</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number-badge">02</div>
+                        <span class="material-symbols-outlined step-item-icon">shopping_cart</span>
+                        <h3>Add products into the cart</h3>
+                        <p>Browse our dawn-harvested organic veggies and select your weight preferences.</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number-badge">03</div>
+                        <span class="material-symbols-outlined step-item-icon">credit_card</span>
+                        <h3>Select the Delivery mode and pay</h3>
+                        <p>Select your community delivery window drop and checkout securely.</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number-badge">04</div>
+                        <span class="material-symbols-outlined step-item-icon">task_alt</span>
+                        <h3>Receive order according to schedule</h3>
+                        <p>Get fresh produce brought directly to your society hub in shared vehicles.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sticky Quick Search Bar (Instamart/Zepto Style) -->
+            <div class="sticky-search-wrapper container" id="mobile-sticky-search-bar">
+                <div class="search-input-wrapper prominent-search">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input type="text" id="shop-search-main" placeholder="Search tomatoes, spinach, daily essentials..." aria-label="Search produce">
+                </div>
+            </div>
+
+            <!-- Horizontal Scrollable Category Pills (Zepto Style) -->
+            <div class="mobile-categories-wrapper container" id="mobile-categories-bar">
+                <div class="horizontal-scroll-category" id="mobile-category-list">
+                    <button class="mobile-cat-chip active" data-category="all">All Produce</button>
+                    <button class="mobile-cat-chip" data-category="leafy">Leafy Greens</button>
+                    <button class="mobile-cat-chip" data-category="root">Roots & Tubers</button>
+                    <button class="mobile-cat-chip" data-category="daily">Daily Essentials</button>
+                    <button class="mobile-cat-chip" data-category="exotic">Exotic Harvest</button>
+                </div>
+            </div>
+
+            <div class="shop-layout">
+                <!-- Sidebar Filters -->
+                <aside class="shop-sidebar" id="filter-sidebar">
+                    <div class="sidebar-header">
+                        <h2>Filter Harvest</h2>
+                        <button class="sidebar-close" id="close-filters-btn" aria-label="Close filters">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <h3>Search Produce</h3>
+                        <div class="search-input-wrapper">
+                            <span class="material-symbols-outlined search-icon">search</span>
+                            <input type="text" id="shop-search" placeholder="Search tomatoes, spinach..." aria-label="Search organic produce">
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h3>Categories</h3>
+                        <div class="category-list" id="category-filter-list">
+                            <button class="category-chip active" data-category="all">All Produce</button>
+                            <button class="category-chip" data-category="leafy">Leafy Greens</button>
+                            <button class="category-chip" data-category="root">Roots & Tubers</button>
+                            <button class="category-chip" data-category="daily">Daily Essentials</button>
+                            <button class="category-chip" data-category="exotic">Exotic Harvest</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h3>Sort By</h3>
+                        <select id="sort-selector" class="form-select" aria-label="Sort organic produce">
+                            <option value="default">Default Sourcing</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="popular">Most Popular</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group-stats">
+                        <div class="stats-panel">
+                            <h4>Consolidated Route Timings</h4>
+                            <ul class="slot-list-info">
+                                <li><span class="slot-badge">7:00 AM</span> Dew Fresh Delivery</li>
+                                <li><span class="slot-badge">2:00 PM</span> Mid-day Harvest</li>
+                                <li><span class="slot-badge">5:00 PM</span> Sunset Kitchen Prep</li>
+                                <li><span class="slot-badge">9:00 PM</span> Night Convenience</li>
+                            </ul>
+                            <p class="slot-hint">Order with neighbors to ensure consolidated truck routing.</p>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Product Catalog -->
+                <div class="catalog-container">
+                    <div class="catalog-header">
+                        <div class="catalog-results-info">
+                            Showing <span id="result-count">0</span> organic varieties
+                        </div>
+                        <button class="btn btn-secondary filter-toggle-btn" id="open-filters-btn">
+                            <span class="material-symbols-outlined">filter_alt</span> Refine List
+                        </button>
+                    </div>
+
+                    <div class="vegetable-grid" id="vegetable-grid">
+                        <!-- Vegetable Cards rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. MY ORDERS VIEW -->
+        <section id="orders-view" class="view-section">
+            <div class="container medium-container">
+                <div class="section-title-wrapper">
+                    <span class="material-symbols-outlined title-icon">local_shipping</span>
+                    <h2>My Scheduled Deliveries</h2>
+                    <p>Track your active bookings, farm dispatches, and order history.</p>
+                </div>
+
+                <!-- Logged Out Alert -->
+                <div class="auth-required-state" id="orders-auth-alert">
+                    <div class="alert-card text-center">
+                        <span class="material-symbols-outlined alert-card-icon">lock</span>
+                        <h3>Secure Customer Account Portal</h3>
+                        <p>Sign in or register to schedule delivery windows, view farm dispatch origins, and trace your produce.</p>
+                        <button class="btn btn-primary" onclick="app.navigateTo('auth-view')">Sign In / Register</button>
+                    </div>
+                </div>
+
+                <!-- Logged In Orders List -->
+                <div class="orders-dashboard hidden" id="orders-dashboard-content">
+                    <div class="order-stats-bar">
+                        <div class="order-stat-card">
+                            <span class="stat-num" id="user-total-orders">0</span>
+                            <span class="stat-lbl">Bookings Placed</span>
+                        </div>
+                        <div class="order-stat-card">
+                            <span class="stat-num" id="user-active-orders">0</span>
+                            <span class="stat-lbl">In Transit (Active)</span>
+                        </div>
+                        <div class="order-stat-card promo-status-highlight" id="user-promo-banner-card">
+                            <span class="stat-num text-success" id="user-promo-status">No Promo</span>
+                            <span class="stat-lbl" id="user-promo-expiry">Register to unlock offer</span>
+                        </div>
+                    </div>
+
+                    <div class="orders-group">
+                        <h3>Active Deliveries</h3>
+                        <div class="orders-list" id="active-orders-list">
+                            <!-- Active orders will be injected here -->
+                            <div class="empty-state">No active deliveries. Place an order to see it here!</div>
+                        </div>
+                    </div>
+
+                    <div class="orders-group margin-top-large">
+                        <h3>Past Harvest Bookings</h3>
+                        <div class="orders-list" id="past-orders-list">
+                            <!-- Past orders will be injected here -->
+                            <div class="empty-state">No past orders.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. AUTH VIEW (LOGIN/REGISTER) -->
+        <section id="auth-view" class="view-section">
+            <div class="container small-container">
+                <div class="auth-card">
+                    <div class="auth-tabs">
+                        <button class="auth-tab active" id="tab-login-btn">Sign In</button>
+                        <button class="auth-tab" id="tab-register-btn">Create Account</button>
+                    </div>
+
+                    <div class="auth-form-container">
+                        <!-- Sign In Form -->
+                        <form id="login-form" class="auth-form">
+                            <h2>Welcome Back to Gudiya Mart</h2>
+                            <p class="form-desc">Log in to book farm-fresh vegetables and view community drop schedules.</p>
+                            
+                            <div class="form-group">
+                                <label for="login-email">Email or Registered Phone Number</label>
+                                <div class="input-icon-wrapper">
+                                    <span class="material-symbols-outlined">mail</span>
+                                    <input type="text" id="login-email" required placeholder="e.g. name@email.com or phone number">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="login-password">Password</label>
+                                <div class="input-icon-wrapper">
+                                    <span class="material-symbols-outlined">lock</span>
+                                    <input type="password" id="login-password" required placeholder="Enter password">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-full margin-top-medium">Secure Log In</button>
+                            
+                            <div class="form-footer">
+                                <p>Don't have an account? <span class="auth-switch" onclick="app.toggleAuthTab('register')">Sign Up</span></p>
+                            </div>
+                        </form>
+
+                        <!-- Sign Up Form -->
+                        <form id="register-form" class="auth-form hidden">
+                            <h2>Join Our Community Sourcing</h2>
+                            <p class="form-desc">First 100 members receive 10% OFF & free deliveries for a month! All data is securely stored.</p>
+                            
+                            <div class="promo-spots-alert" id="register-promo-badge">
+                                <span class="material-symbols-outlined">campaign</span>
+                                <span id="register-promo-text">Hurry! Launch promo spots are still available.</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="reg-name">Full Name</label>
+                                <div class="input-icon-wrapper">
+                                    <span class="material-symbols-outlined">person</span>
+                                    <input type="text" id="reg-name" required placeholder="John Doe">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="reg-email">Email Address</label>
+                                    <div class="input-icon-wrapper">
+                                        <span class="material-symbols-outlined">mail</span>
+                                        <input type="email" id="reg-email" required placeholder="john@example.com">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-phone">Mobile Number</label>
+                                    <div class="input-icon-wrapper">
+                                        <span class="material-symbols-outlined">call</span>
+                                        <input type="tel" id="reg-phone" required placeholder="10-digit mobile number">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="reg-address">Delivery Address (Society/Apartment & Flat)</label>
+                                <div class="input-icon-wrapper">
+                                    <span class="material-symbols-outlined">home</span>
+                                    <textarea id="reg-address" required placeholder="e.g. Flat 402, Block B, Green Valley Apartments, Sector 12" rows="2"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="reg-password">Create Secure Password</label>
+                                <div class="input-icon-wrapper">
+                                    <span class="material-symbols-outlined">lock</span>
+                                    <input type="password" id="reg-password" required placeholder="Min 6 characters">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-full margin-top-medium">Register & Claim Sponsoring Slot</button>
+                            
+                            <div class="form-footer">
+                                <p>Already have an account? <span class="auth-switch" onclick="app.toggleAuthTab('login')">Sign In</span></p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. ADMIN VIEW -->
+        <section id="admin-view" class="view-section">
+            <div class="container large-container">
+                <div class="admin-header-layout">
+                    <div class="section-title-wrapper" style="align-items:flex-start; text-align:left;">
+                        <span class="material-symbols-outlined title-icon">shield_person</span>
+                        <h2>Admin Operations Hub</h2>
+                        <p>Monitor harvest logs, dispatch community delivery trucks, and manage user lists.</p>
+                    </div>
+                    <div class="admin-actions">
+                        <button class="btn btn-secondary" id="seed-mock-orders-btn">
+                            <span class="material-symbols-outlined">database</span> Populate Live Mock Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Access Warning -->
+                <div class="auth-required-state" id="admin-auth-alert">
+                    <div class="alert-card text-center">
+                        <span class="material-symbols-outlined alert-card-icon">security</span>
+                        <h3>Administrative Privileges Required</h3>
+                        <p>This workspace is restricted to Gudiya Mart fulfillment staff and managers.</p>
+                        <div class="demo-login-info">
+                            <p><strong>Demo Administrator Credentials:</strong> admin@gudiyamart.com / password: admin123</p>
+                        </div>
+                        <br>
+                        <button class="btn btn-primary" onclick="app.navigateTo('auth-view')">Go to Sign In</button>
+                    </div>
+                </div>
+
+                <!-- Admin Content -->
+                <div class="admin-dashboard hidden" id="admin-dashboard-content">
+                    <!-- Stats Grid -->
+                    <div class="admin-stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper bg-primary">
+                                <span class="material-symbols-outlined">payments</span>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-title">Fulfillment Revenue</span>
+                                <span class="stat-value" id="admin-stat-revenue">₹0.00</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper bg-info">
+                                <span class="material-symbols-outlined">shopping_cart_checkout</span>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-title">Fulfillment Bookings</span>
+                                <span class="stat-value" id="admin-stat-orders">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper bg-warning">
+                                <span class="material-symbols-outlined">groups</span>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-title">Registered Locals</span>
+                                <span class="stat-value" id="admin-stat-users">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper bg-success">
+                                <span class="material-symbols-outlined">card_membership</span>
+                            </div>
+                            <div class="stat-content">
+                                <span class="stat-title">Launch Promo Claimed</span>
+                                <span class="stat-value" id="admin-stat-promo">0 / 100</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Navigation Sub-tabs -->
+                    <div class="admin-subtabs">
+                        <button class="admin-subtab active" data-subtab="admin-orders-tab" id="subtab-orders">
+                            <span class="material-symbols-outlined">receipt_long</span> Truck Dispatch Manager
+                        </button>
+                        <button class="admin-subtab" data-subtab="admin-inventory-tab" id="subtab-inventory">
+                            <span class="material-symbols-outlined">inventory_2</span> Sourcing & Stock List
+                        </button>
+                        <button class="admin-subtab" data-subtab="admin-users-tab" id="subtab-users">
+                            <span class="material-symbols-outlined">group_work</span> Local Customer Directory
+                        </button>
+                    </div>
+
+                    <!-- SUBTAB 1: ORDERS DISPATCH & SLOTS -->
+                    <div class="admin-tab-content active-subtab" id="admin-orders-tab">
+                        <div class="dispatch-controls-card">
+                            <div class="dispatch-filters">
+                                <div class="filter-item">
+                                    <label for="admin-filter-slot">Consolidated Delivery Slot</label>
+                                    <select id="admin-filter-slot" class="form-select">
+                                        <option value="all">All Timings (Community-wide)</option>
+                                        <option value="7:00 AM">7:00 AM Slot (dew fresh)</option>
+                                        <option value="2:00 PM">2:00 PM Slot (mid-day dispatch)</option>
+                                        <option value="5:00 PM">5:00 PM Slot (sunset kitchen prep)</option>
+                                        <option value="9:00 PM">9:00 PM Slot (night conv.)</option>
+                                    </select>
+                                </div>
+                                <div class="filter-item">
+                                    <label for="admin-filter-status">Fulfillment Status</label>
+                                    <select id="admin-filter-status" class="form-select">
+                                        <option value="all">All Statuses</option>
+                                        <option value="Pending">Pending Approval</option>
+                                        <option value="Packing">In Packing</option>
+                                        <option value="Out for Delivery">Out for Delivery</option>
+                                        <option value="Delivered">Delivered</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-table-container">
+                            <table class="admin-table" id="admin-orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Produce Booked</th>
+                                        <th>Route Window</th>
+                                        <th>Address</th>
+                                        <th>Paid Total</th>
+                                        <th>Fulfillment Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-orders-table-body">
+                                    <tr>
+                                        <td colspan="8" class="text-center">No orders match filter options.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SUBTAB 2: VEGETABLE CATALOG INVENTORY -->
+                    <div class="admin-tab-content" id="admin-inventory-tab">
+                        <div class="inventory-layout">
+                            <!-- Add/Edit Product Form -->
+                            <div class="admin-card">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 8px;">
+                                    <h3 id="product-form-title" style="margin-bottom:0;">Register Farm Supply</h3>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="app.forceSyncInventoryToSupabase()" style="padding: 6px 12px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; border-color: var(--primary); color: var(--primary);">
+                                        <span class="material-symbols-outlined" style="font-size: 1rem;">cloud_upload</span> Sync Inventory to DB
+                                    </button>
+                                </div>
+                                <form id="product-manage-form">
+                                    <input type="hidden" id="edit-prod-id">
+                                    
+                                    <div class="form-group">
+                                        <label for="prod-name">Produce Name</label>
+                                        <input type="text" id="prod-name" required placeholder="e.g. Heirloom Cherry Tomatoes">
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="prod-category">Category</label>
+                                            <select id="prod-category" class="form-select">
+                                                <option value="leafy">Leafy Greens</option>
+                                                <option value="root">Roots & Tubers</option>
+                                                <option value="daily">Daily Essentials</option>
+                                                <option value="exotic">Exotic Harvest</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="prod-unit">Selling Unit</label>
+                                            <input type="text" id="prod-unit" required placeholder="e.g. 1 kg, 500g, bunch">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="prod-price">Farmer Sourcing Price (₹)</label>
+                                            <input type="number" id="prod-price" required step="1" min="1" placeholder="40">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="prod-stock">Quantity Sourced</label>
+                                            <input type="number" id="prod-stock" required min="0" placeholder="50">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="prod-image">Image URL</label>
+                                        <input type="url" id="prod-image" required placeholder="https://images.unsplash.com/photo-...">
+                                    </div>
+
+                                    <div class="form-actions-inline">
+                                        <button type="submit" class="btn btn-primary" id="save-product-btn">Record Harvest</button>
+                                        <button type="button" class="btn btn-secondary hidden" id="cancel-edit-btn">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Inventory List Table -->
+                            <div class="admin-card flex-grow">
+                                <h3>Active Harvest Sourcing</h3>
+                                <div class="admin-table-container">
+                                    <table class="admin-table" id="admin-inventory-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Image</th>
+                                                <th>Name</th>
+                                                <th>Category</th>
+                                                <th>Price / Unit</th>
+                                                <th>Stock</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="admin-inventory-table-body">
+                                            <!-- Products injected dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUBTAB 3: CUSTOMER ACCOUNTS -->
+                    <div class="admin-tab-content" id="admin-users-tab">
+                        <div class="admin-card">
+                            <h3>Registered Neighborhood Locals</h3>
+                            <div class="admin-table-container">
+                                <table class="admin-table" id="admin-users-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Phone</th>
+                                            <th>Society Address</th>
+                                            <th>Promo Tier</th>
+                                            <th>Registered At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-users-table-body">
+                                        <!-- Users injected dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Sliding Shopping Cart Drawer -->
+    <div class="drawer-overlay" id="cart-drawer-overlay"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="drawer-header">
+            <div class="drawer-title">
+                <span class="material-symbols-outlined">shopping_basket</span>
+                <h2>Sourcing Basket</h2>
+            </div>
+            <button class="drawer-close" id="close-cart-btn" aria-label="Close Basket">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="drawer-body" id="cart-drawer-body">
+            <!-- Empty Cart state -->
+            <div class="cart-empty-state" id="cart-empty-view">
+                <span class="material-symbols-outlined">yard</span>
+                <p>Your basket is empty. Select from our dawn harvest list.</p>
+                <button class="btn btn-primary" id="start-shopping-btn">Explore Produce</button>
+            </div>
+
+            <!-- Filled Cart content -->
+            <div class="cart-items-container hidden" id="cart-items-view">
+                <div class="cart-items-list" id="cart-items-list">
+                    <!-- Dynamic cart items list -->
+                </div>
+
+                <hr class="drawer-divider">
+
+                <!-- Community Dispatch Scheduler -->
+                <div class="cart-delivery-scheduler">
+                    <h3>
+                        <span class="material-symbols-outlined">schedule</span>
+                        Consolidated Route Scheduler
+                    </h3>
+                    <p class="scheduler-explanation">Choose a structured community dispatch time. We consolidate neighborhood orders to minimize vehicle mileage, preserve cold-chain, and assure dawn freshness.</p>
+                    
+                    <div class="delivery-time-grid">
+                        <label class="time-slot-option">
+                            <input type="radio" name="delivery-time" value="7:00 AM" checked>
+                            <span class="time-slot-card">
+                                <span class="slot-time">7:00 AM</span>
+                                <span class="slot-desc">Dew Fresh morning</span>
+                                <span class="slot-community-stats" id="neigh-count-7">5 neighbors opted</span>
+                            </span>
+                        </label>
+                        
+                        <label class="time-slot-option">
+                            <input type="radio" name="delivery-time" value="2:00 PM">
+                            <span class="time-slot-card">
+                                <span class="slot-time">2:00 PM</span>
+                                <span class="slot-desc">Mid-day harvest dispatch</span>
+                                <span class="slot-community-stats" id="neigh-count-2">2 neighbors opted</span>
+                            </span>
+                        </label>
+
+                        <label class="time-slot-option">
+                            <input type="radio" name="delivery-time" value="5:00 PM">
+                            <span class="time-slot-card">
+                                <span class="slot-time">5:00 PM</span>
+                                <span class="slot-desc">Sunset kitchen prep</span>
+                                <span class="slot-community-stats" id="neigh-count-5">8 neighbors opted</span>
+                            </span>
+                        </label>
+
+                        <label class="time-slot-option">
+                            <input type="radio" name="delivery-time" value="9:00 PM">
+                            <span class="time-slot-card">
+                                <span class="slot-time">9:00 PM</span>
+                                <span class="slot-desc">Night convenience</span>
+                                <span class="slot-community-stats" id="neigh-count-9">1 neighbor opted</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <hr class="drawer-divider">
+
+                <!-- Delivery Address -->
+                <div class="cart-address-wrapper">
+                    <label for="cart-delivery-address"><strong>Verify Sourcing Address:</strong></label>
+                    <textarea id="cart-delivery-address" rows="2" placeholder="Confirm your street, building, flat number..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="drawer-footer hidden" id="cart-drawer-footer">
+            <div class="cart-promo-alert hidden" id="cart-promo-badge">
+                <span class="material-symbols-outlined text-success">verified</span>
+                <span>Launch Member Applied: 10% OFF & Free Delivery!</span>
+            </div>
+            
+            <div class="price-summary">
+                <div class="summary-line">
+                    <span>Produce Subtotal</span>
+                    <span id="cart-subtotal">₹0.00</span>
+                </div>
+                <div class="summary-line">
+                    <span>Community Shipping</span>
+                    <span id="cart-shipping">₹0.00</span>
+                </div>
+                <div class="summary-line discount-line hidden" id="cart-discount-wrapper">
+                    <span>10% Sponsoring Discount</span>
+                    <span id="cart-discount">-₹0.00</span>
+                </div>
+                <div class="summary-line total-line">
+                    <span>Invoice Total</span>
+                    <span id="cart-total">₹0.00</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-large btn-full" id="checkout-btn">
+                Confirm Harvest Booking
+            </button>
+        </div>
+    </div>
+
+    <!-- Authentic Footer & Trust Badge Integrations -->
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="footer-brand-logo">
+                    <span class="material-symbols-outlined logo-icon">yard</span>
+                    <span>Gudiya <span class="accent-text">Mart</span></span>
+                </div>
+                <p class="footer-tagline">Consolidated route scheduling bringing dawn-harvested fresh greens straight from farmers to community society hubs daily.</p>
+            </div>
+            
+            <div class="footer-middle">
+                <h4>Payment Integrity</h4>
+                <div class="payment-trust-badge">
+                    <span class="material-symbols-outlined payment-shield">verified_user</span>
+                    <div class="payment-trust-text">
+                        <span class="title">Trusted Payment Partner</span>
+                        <span class="partner-name">Cashfree Payments</span>
+                    </div>
+                </div>
+                <p class="payment-security-note">Secure 256-bit encryption for all card, UPI, and local banking transfers.</p>
+            </div>
+
+            <div class="footer-links">
+                <h4>Operations</h4>
+                <button class="footer-admin-link" onclick="app.navigateTo('admin-view')">
+                    <span class="material-symbols-outlined">shield_person</span> Sourcing & Fulfillment Panel
+                </button>
+                <p class="footer-admin-note">Restricted to Gudiya Mart authorized harvesting and logistics staff.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Upcoming Society Store Integration banner (Fancy / Stationary Store coming soon) -->
+    <section class="upcoming-stores-section">
+        <div class="coming-soon-card">
+            <div class="coming-soon-icon-wrapper">
+                <span class="material-symbols-outlined">auto_stories</span>
+            </div>
+            <div class="coming-soon-content">
+                <span class="badge">COMING SOON</span>
+                <h3>Stationery & Fancy Store Hubs</h3>
+                <p>We are expanding! Stationery, crafts, and luxury essentials will soon join the consolidated community deliveries at Gudiya Mart hubs.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Floating Quick Cart Banner (Zepto Style) -->
+    <div class="floating-cart-banner" id="floating-cart-banner">
+        <div class="floating-cart-content">
+            <div class="floating-cart-info">
+                <span class="floating-cart-qty" id="float-cart-qty">0 items</span>
+                <span class="floating-cart-separator">|</span>
+                <span class="floating-cart-total" id="float-cart-total">₹0</span>
+            </div>
+            <button class="floating-cart-btn" id="float-view-cart-btn">
+                <span>View Cart</span>
+                <span class="material-symbols-outlined">arrow_right_alt</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Sticky Bottom Navigation Bar (Instamart/Zepto Style) -->
+    <nav class="mobile-bottom-nav">
+        <button class="bottom-nav-item active" data-target="shop-view" id="btn-nav-shop">
+            <span class="material-symbols-outlined">storefront</span>
+            <span class="nav-label">Shop</span>
+        </button>
+        <button class="bottom-nav-item" data-target="orders-view" id="btn-nav-orders">
+            <span class="material-symbols-outlined">local_shipping</span>
+            <span class="nav-label">Deliveries</span>
+        </button>
+        <button class="bottom-nav-item" id="btn-nav-cart">
+            <div class="nav-item-icon-wrapper">
+                <span class="material-symbols-outlined">shopping_basket</span>
+                <span class="cart-badge-bottom" id="cart-count-bottom">0</span>
+            </div>
+            <span class="nav-label">Cart</span>
+        </button>
+        <button class="bottom-nav-item" data-target="auth-view" id="btn-nav-profile">
+            <span class="material-symbols-outlined">person</span>
+            <span class="nav-label">Profile</span>
+        </button>
+    </nav>
+
+    <!-- Notification Toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
