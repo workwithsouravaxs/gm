@@ -3193,5 +3193,128 @@ textarea:focus-visible {
     }
 }
 
+/* Mobile Quick-Commerce Layout Optimization */
+@media (max-width: 768px) {
+    /* Header location text adjustments */
+    .location-header {
+        max-width: 180px !important;
+    }
+    .location-value {
+        max-width: 120px !important;
+        font-size: 0.78rem !important;
+    }
+    
+    /* 2-Column Product Grid like Instamart/Zepto */
+    .vegetable-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        padding: 0 !important;
+    }
+    
+    .product-card {
+        border-radius: var(--radius-md) !important;
+    }
+    
+    .product-info {
+        padding: 10px !important;
+    }
+    
+    .product-title {
+        font-size: 0.95rem !important;
+        margin-bottom: 4px !important;
+        min-height: 38px; /* Align grid card buttons vertically */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .product-price-row {
+        margin-bottom: 10px !important;
+        gap: 2px !important;
+    }
+    
+    .product-price {
+        font-size: 1.1rem !important;
+    }
+    
+    .product-unit {
+        font-size: 0.7rem !important;
+    }
+    
+    .product-stock-lbl {
+        font-size: 0.68rem !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .product-weight-selector {
+        gap: 4px !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .weight-chip {
+        padding: 4px 6px !important;
+        font-size: 0.65rem !important;
+        border-radius: var(--radius-sm) !important;
+    }
+    
+    /* Optimize buttons inside 2-column cards */
+    .product-info .btn {
+        padding: 6px 8px !important;
+        font-size: 0.78rem !important;
+        height: 34px !important;
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    
+    .product-card-qty-stepper {
+        height: 34px !important;
+    }
+    
+    .qty-btn-step {
+        font-size: 1.1rem !important;
+    }
+    
+    .qty-val-step {
+        font-size: 0.8rem !important;
+    }
+    
+    /* Hero Banner Slider fonts on Mobile */
+    .hero-title {
+        font-size: 1.5rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.8rem !important;
+        line-height: 1.4 !important;
+    }
+    
+    .hero-countdown-wrapper {
+        align-items: center !important;
+        margin: 12px auto !important;
+        padding: 8px 12px !important;
+        max-width: 95% !important;
+    }
+    
+    .time-num {
+        font-size: 1.25rem !important;
+    }
+    
+    .time-lbl {
+        font-size: 0.55rem !important;
+    }
+    
+    .time-colon {
+        font-size: 1.25rem !important;
+        margin-top: -12px !important;
+    }
+    
+    .countdown-note {
+        font-size: 0.72rem !important;
+        margin-top: 6px !important;
+    }
+}
+
 
 

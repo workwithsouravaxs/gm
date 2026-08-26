@@ -8,7 +8,7 @@ const app = {
     supabase: {
         url: "https://abobgjnuxejihezxlxdq.supabase.co/rest/v1",
         key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFib2Jnam51eGVqaWhlenhseGRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MTY0MDIsImV4cCI6MjEwMzI5MjQwMn0.Uf-VibHLXIj0mzlpWfCV4bKo3BoFXQb5UBjfjPKOS3s", // Replace with your Supabase Anon API Key
-        
+
         async request(endpoint, method = 'GET', body = null) {
             if (!this.key || this.key === "PLACEHOLDER_KEY") {
                 console.warn("Supabase API Key is missing. Using local storage mode.");
@@ -263,20 +263,7 @@ const app = {
         if (storedUsers) {
             this.state.users = JSON.parse(storedUsers);
         } else {
-            // Seed default admin account
-            this.state.users = [
-                {
-                    id: 'admin-0',
-                    name: 'Gudiya Admin',
-                    email: 'admin@gudiyamart.com',
-                    phone: '9999999999',
-                    address: 'Gudiya Mart Center, Block C',
-                    password: 'admin123',
-                    isAdmin: true,
-                    isPromoMember: false,
-                    joinedAt: new Date().toISOString()
-                }
-            ];
+            this.state.users = [];
         }
 
         // Setup current user session
@@ -342,11 +329,11 @@ const app = {
 
     startHeroCountdown() {
         const targetDate = new Date("August 28, 2026 00:00:00").getTime();
-        
+
         const updateCountdown = () => {
             const now = new Date().getTime();
             const distance = targetDate - now;
-            
+
             if (distance < 0) {
                 clearInterval(this.state.countdownInterval);
                 document.querySelectorAll('.hero-countdown-wrapper').forEach(el => {
@@ -354,20 +341,20 @@ const app = {
                 });
                 return;
             }
-            
+
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            
+
             const format = num => String(num).padStart(2, '0');
-            
+
             document.querySelectorAll('.countdown-days').forEach(el => el.textContent = format(days));
             document.querySelectorAll('.countdown-hours').forEach(el => el.textContent = format(hours));
             document.querySelectorAll('.countdown-mins').forEach(el => el.textContent = format(minutes));
             document.querySelectorAll('.countdown-secs').forEach(el => el.textContent = format(seconds));
         };
-        
+
         updateCountdown();
         this.state.countdownInterval = setInterval(updateCountdown, 1000);
     },
@@ -412,8 +399,6 @@ const app = {
         const dbUsers = await this.supabase.request('gudiyamart_users', 'GET');
         if (dbUsers && Array.isArray(dbUsers)) {
             console.log(`Synced ${dbUsers.length} users from Supabase.`);
-            const localAdmin = this.state.users.find(u => u.isAdmin);
-            const adminAccount = localAdmin ? [localAdmin] : [];
             const mappedUsers = dbUsers.map(u => ({
                 id: u.id,
                 name: u.name,
@@ -425,7 +410,7 @@ const app = {
                 isPromoMember: u.is_promo_member,
                 joinedAt: u.created_at
             }));
-            this.state.users = [...adminAccount, ...mappedUsers.filter(u => !u.isAdmin)];
+            this.state.users = mappedUsers;
             this.saveToStorage();
         }
 
@@ -797,11 +782,11 @@ const app = {
         document.querySelectorAll('#mobile-category-list .mobile-cat-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 const category = chip.getAttribute('data-category');
-                
+
                 // Toggle active on mobile chips
                 document.querySelectorAll('#mobile-category-list .mobile-cat-chip').forEach(c => c.classList.remove('active'));
                 chip.classList.add('active');
-                
+
                 // Sync to desktop sidebar category chips
                 document.querySelectorAll('#category-filter-list .category-chip').forEach(c => {
                     c.classList.remove('active');
@@ -809,7 +794,7 @@ const app = {
                         c.classList.add('active');
                     }
                 });
-                
+
                 this.renderShop();
             });
         });
@@ -1043,12 +1028,12 @@ const app = {
         // 2. Fallback: Check Supabase online if not found locally
         if (!user && this.supabase.key && this.supabase.key !== "PLACEHOLDER_KEY") {
             this.showToast("Authenticating online...", "info");
-            
+
             // Build query based on email or phone
             const isEmail = emailOrPhone.includes('@');
             const field = isEmail ? 'email' : 'phone';
             const endpoint = `gudiyamart_users?${field}=eq.${encodeURIComponent(emailOrPhone)}&password=eq.${encodeURIComponent(password)}`;
-            
+
             const dbUsers = await this.supabase.request(endpoint, 'GET');
             if (dbUsers && dbUsers.length > 0) {
                 const dbUser = dbUsers[0];
@@ -1063,7 +1048,7 @@ const app = {
                     isPromoMember: dbUser.is_promo_member,
                     joinedAt: dbUser.created_at
                 };
-                
+
                 // Add to local state list so it's cached locally
                 if (!this.state.users.some(u => u.id === user.id)) {
                     this.state.users.push(user);
@@ -1262,7 +1247,7 @@ const app = {
         if (!prod || prod.stock <= 0) return;
 
         const cartItem = this.state.cart.find(item => item.productId === productId);
-        
+
         // Use the selected weight choice if defined, otherwise default to product's step size
         const selectedQty = this.state.selectedWeights[productId] || Number(prod.step || 1);
 
@@ -1300,7 +1285,7 @@ const app = {
                     return Math.abs(val - currentQty) < Math.abs(weightOptions[closestIdx] - currentQty) ? i : closestIdx;
                 }, 0);
             }
-            
+
             let nextIdx = idx + delta;
             if (nextIdx >= 0 && nextIdx < weightOptions.length) {
                 const newQty = weightOptions[nextIdx];
@@ -1378,7 +1363,7 @@ const app = {
             emptyView.classList.remove('hidden');
             itemsView.classList.add('hidden');
             footer.classList.add('hidden');
-            
+
             if (floatBanner) {
                 floatBanner.classList.remove('visible');
             }
@@ -1406,7 +1391,7 @@ const app = {
 
             // Generate dropdown options dynamically
             let selectOptions = '';
-            
+
             if (prod.unit.toLowerCase().includes('kg')) {
                 const weightOptions = [0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
                 weightOptions.forEach(w => {
