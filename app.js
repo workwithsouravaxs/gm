@@ -339,6 +339,9 @@ const app = {
         // Asynchronously sync database from Supabase on load
         await this.syncFromSupabase();
 
+        // Check and verify Cashfree payment redirect callback
+        await this.verifyCashfreePaymentRedirect();
+
         console.log("Gudiya Mart Initialized!");
     },
 
@@ -1573,11 +1576,30 @@ const app = {
             shipping: shippingFee,
             total: finalTotal,
             status: 'Pending',
+            paymentStatus: 'Unpaid',
+            paymentMethod: 'Cashfree Web',
+            transactionId: 'None',
             orderedAt: new Date().toISOString()
         };
 
-        // Reroute order completion through Cashfree Gateway Checkout
-        this.state.tempOrder = newOrder;
+        // Complete order booking locally as unpaid first
+        this.state.orders.push(newOrder);
+        this.state.cart = []; // Empty cart immediately
+        this.saveToStorage();
+
+        // Write to Supabase database asynchronously
+        const dbOrder = this.mapOrderToDB(newOrder);
+        this.supabase.request('gudiyamart_orders', 'POST', dbOrder).then(res => {
+            if (res) console.log("Order saved to database as unpaid.", res);
+        });
+
+        // Close cart drawer & update views
+        document.getElementById('cart-drawer-overlay').classList.remove('open');
+        document.getElementById('cart-drawer').classList.remove('open');
+        this.renderCart();
+        this.renderShop();
+
+        // Open Cashfree checkout interface
         this.openCashfreeCheckout(newOrder);
     },
 
@@ -2358,91 +2380,108 @@ const app = {
         document.getElementById('appreciation-feedback-form').reset();
     },
 
-    openCashfreeCheckout(order) {
-        document.getElementById('cf-order-id').textContent = order.id;
-        document.getElementById('cf-customer-name').textContent = order.userName;
-        document.getElementById('cf-total-amount').textContent = '₹' + order.total;
+    async openCashfreeCheckout(order) {
+        this.showToast("Initiating secure Cashfree Web Checkout...", "info");
 
-        // Reset display states inside checkout modal
-        this.switchCFMethod('cf-upi');
-        document.getElementById('cf-processor').classList.add('hidden');
-        document.getElementById('cf-card-form').reset();
-
-        document.getElementById('cashfree-overlay').classList.add('open');
-    },
-
-    closeCashfreeCheckout() {
-        document.getElementById('cashfree-overlay').classList.remove('open');
-        this.state.tempOrder = null;
-        this.showToast("Payment checkout cancelled.", "warning");
-    },
-
-    switchCFMethod(methodId) {
-        // Toggle tab highlights
-        document.querySelectorAll('.cashfree-methods-tabs .cf-tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        if (methodId === 'cf-upi') {
-            document.getElementById('cf-tab-upi').classList.add('active');
-        } else {
-            document.getElementById('cf-tab-card').classList.add('active');
-        }
-
-        // Toggle screen visibility
-        document.querySelectorAll('.cf-method-screen').forEach(scr => {
-            scr.classList.remove('active-method');
-        });
-        document.getElementById(methodId).classList.add('active-method');
-    },
-
-    processCFPayment(method, event = null) {
-        if (event) event.preventDefault();
-
-        // 1. Show Processing Screen overlay (secure banking connection simulation)
-        document.getElementById('cf-processor').classList.remove('hidden');
-
-        // 2. Simulate transaction processing (takes 2.2 seconds)
-        setTimeout(() => {
-            const order = this.state.tempOrder;
-            if (!order) return;
-
-            // Generate simulated transaction ID matching Cashfree standard format
-            const transactionId = 'TXN_CF_' + Math.random().toString(36).substring(2, 11).toUpperCase();
-
-            // Set final transaction details
-            order.paymentMethod = method;
-            order.transactionId = transactionId;
-            order.paymentStatus = 'Paid';
-
-            // Complete Order Booking
-            this.state.orders.push(order);
-            this.state.cart = []; // Empty cart
-            this.saveToStorage();
-
-            // Write to Supabase database asynchronously
-            const dbOrder = this.mapOrderToDB(order);
-            // Append payment fields to the database representation
-            dbOrder.payment_status = 'Paid';
-            dbOrder.payment_method = method;
-            dbOrder.transaction_id = transactionId;
-
-            this.supabase.request('gudiyamart_orders', 'POST', dbOrder).then(res => {
-                if (res) console.log("Cashfree payment order saved to Supabase!", res);
+        try {
+            const customerEmail = this.state.currentUser ? this.state.currentUser.email : 'guest@gudiyamart.com';
+            const response = await fetch('./api/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    orderId: order.id,
+                    amount: order.total,
+                    customerId: order.userId,
+                    customerName: order.userName,
+                    customerPhone: order.userPhone,
+                    customerEmail: customerEmail
+                })
             });
 
-            this.showToast(`Payment successfully processed via Cashfree! Transaction: ${transactionId}`, "success");
+            const data = await response.json();
 
-            // Close modal
-            document.getElementById('cashfree-overlay').classList.remove('open');
-            this.state.tempOrder = null;
+            if (!response.ok) {
+                this.showToast(data.error || "Failed to establish payment session", "error");
+                return;
+            }
 
-            // Refresh drawer and navigation
-            document.getElementById('cart-drawer-overlay').classList.remove('open');
-            document.getElementById('cart-drawer').classList.remove('open');
-            this.renderShop();
-            this.renderCart();
+            if (typeof Cashfree === 'undefined') {
+                this.showToast("Cashfree JS SDK not loaded properly. Reload and try again.", "error");
+                return;
+            }
+
+            const cashfree = Cashfree({
+                mode: data.mode // sandbox or production auto-configured
+            });
+
+            this.showToast("Opening Cashfree Gateway Checkout...", "success");
+
+            // Open Cashfree Payments Checkout Overlay
+            cashfree.checkout({
+                paymentSessionId: data.paymentSessionId,
+                redirectTarget: "_self"
+            });
+
+        } catch (err) {
+            console.error("Cashfree Checkout initiation crash:", err);
+            this.showToast("Could not connect to Cashfree payment gateway.", "error");
+        }
+    },
+
+    async verifyCashfreePaymentRedirect() {
+        const params = new URLSearchParams(window.location.search);
+        const cfOrderId = params.get('cf_order_id');
+
+        if (!cfOrderId) return;
+
+        this.showToast("Confirming Cashfree transaction status...", "info");
+
+        try {
+            const response = await fetch(`./api/verify?orderId=${encodeURIComponent(cfOrderId)}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                this.showToast(data.error || "Could not confirm Cashfree payment status.", "error");
+                return;
+            }
+
+            // Check if status returned is PAID
+            if (data.orderStatus === 'PAID') {
+                // Find order in local state and update
+                const order = this.state.orders.find(o => o.id === cfOrderId);
+                if (order) {
+                    order.paymentStatus = 'Paid';
+                    order.paymentMethod = data.paymentMethod || 'Cashfree Web';
+                    order.transactionId = data.transactionId || 'CF_UNKNOWN';
+                    this.saveToStorage();
+                }
+
+                // Sync status change directly to Supabase
+                await this.supabase.request(`gudiyamart_orders?id=eq.${encodeURIComponent(cfOrderId)}`, 'PATCH', {
+                    payment_status: 'Paid',
+                    payment_method: data.paymentMethod || 'Cashfree Web',
+                    transaction_id: data.transactionId || 'CF_UNKNOWN'
+                });
+
+                this.showToast(`Prepaid booking confirmed successfully! ID: ${data.transactionId}`, "success");
+            } else {
+                this.showToast(`Prepaid transaction was not completed: Status ${data.orderStatus}`, "warning");
+            }
+
+            // Clear URL parameters to prevent multiple verification prompts on page reload
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+
+            // Redirect customer to My Deliveries
             this.navigateTo('orders-view');
-        }, 2200);
+            this.renderOrders();
+
+        } catch (err) {
+            console.error("Cashfree verification redirect callback error:", err);
+            this.showToast("Failed to verify transaction.", "error");
+        }
     },
 
     useSavedProfileAddress() {
