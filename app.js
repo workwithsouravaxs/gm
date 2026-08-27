@@ -97,6 +97,7 @@ const app = {
         orders: [],
         cart: [],
         theme: 'light',
+        adminLanguage: 'en',
         activeView: 'shop-view',
         activeAdminSubtab: 'admin-orders-tab',
         currentSlide: 0,
@@ -270,6 +271,7 @@ const app = {
         const storedProducts = localStorage.getItem('gudiyamart_products');
         const storedOrders = localStorage.getItem('gudiyamart_orders');
         const storedTheme = localStorage.getItem('gudiyamart_theme');
+        const storedAdminLang = localStorage.getItem('gudiyamart_admin_lang');
 
         // Setup users
         if (storedUsers) {
@@ -301,12 +303,18 @@ const app = {
         if (storedTheme) {
             this.state.theme = storedTheme;
         }
+
+        // Setup admin language
+        if (storedAdminLang) {
+            this.state.adminLanguage = storedAdminLang;
+        }
     },
 
     // Initialization
     async init() {
         this.loadFromStorage();
         this.applyTheme();
+        this.applyAdminLanguage();
         this.registerDOMEvents();
         this.updateNavState();
         this.updatePromoSpotsCount();
@@ -346,7 +354,7 @@ const app = {
     },
 
     startHeroCountdown() {
-        const targetDate = new Date("August 28, 2026 00:00:00").getTime();
+        const targetDate = new Date("September 1, 2026 00:00:00").getTime();
 
         const updateCountdown = () => {
             const now = new Date().getTime();
@@ -1112,6 +1120,66 @@ const app = {
         this.renderCart();
     },
 
+    // Convert base unit and multiplier quantity into human-friendly quantity (e.g. 500 gm, 250 gm, 2 Kg, 2 bunches)
+    formatDisplayQuantity(unit = '1 kg', quantity = 1) {
+        const qty = parseFloat(quantity) || 1;
+        const u = (unit || '').toString().toLowerCase().trim();
+
+        // 1. Kg base units (e.g., "1 kg", "kg", "1kg")
+        if (u.includes('kg')) {
+            const totalKg = qty;
+            if (totalKg < 1) {
+                const gm = Math.round(totalKg * 1000);
+                return `${gm} gm`;
+            } else if (totalKg % 1 === 0) {
+                return `${totalKg} Kg`;
+            } else {
+                return `${parseFloat(totalKg.toFixed(2))} Kg`;
+            }
+        }
+
+        // 2. Grams base units (e.g., "250 gm", "500 gm", "100 g", "gm", "g")
+        if (u.includes('gm') || u.includes('gram') || u.includes('g')) {
+            const baseGrams = parseFloat(u.replace(/[^0-9.]/g, '')) || 250;
+            const totalGrams = baseGrams * qty;
+            if (totalGrams >= 1000) {
+                const kgVal = totalGrams / 1000;
+                return kgVal % 1 === 0 ? `${kgVal} Kg` : `${parseFloat(kgVal.toFixed(2))} Kg`;
+            }
+            return `${Math.round(totalGrams)} gm`;
+        }
+
+        // 3. Bunch / Bunches
+        if (u.includes('bunch')) {
+            return qty === 1 ? '1 bunch' : `${qty} bunches`;
+        }
+
+        // 4. Pieces / Pcs
+        if (u.includes('pc') || u.includes('piece')) {
+            return qty === 1 ? '1 pc' : `${qty} pcs`;
+        }
+
+        // 5. Dozen
+        if (u.includes('dozen')) {
+            return qty === 1 ? '1 dozen' : `${qty} dozen`;
+        }
+
+        // 6. Pack / Packs, Box / Boxes
+        if (u.includes('pack')) {
+            return qty === 1 ? '1 pack' : `${qty} packs`;
+        }
+        if (u.includes('box')) {
+            return qty === 1 ? '1 box' : `${qty} boxes`;
+        }
+
+        // 7. General fallback
+        const cleanBase = unit.replace(/^[0-9.]+\s*/, '').trim();
+        if (qty === 1) {
+            return `1 ${cleanBase || 'unit'}`;
+        }
+        return `${qty} ${cleanBase ? cleanBase + (cleanBase.endsWith('s') ? '' : 's') : 'units'}`;
+    },
+
     // Render Product Cards in the Shop Catalog with Skeleton Shimmer loaders
     renderShop(showShimmer = true) {
         const grid = document.getElementById('vegetable-grid');
@@ -1201,7 +1269,7 @@ const app = {
                 actionButtonMarkup = `
                     <div class="product-card-qty-stepper">
                         <button class="qty-btn-step" onclick="app.changeCartQty('${prod.id}', -1)" aria-label="Decrease quantity">-</button>
-                        <span class="qty-val-step">${inCartQty} ${prod.unit}</span>
+                        <span class="qty-val-step">${this.formatDisplayQuantity(prod.unit, inCartQty)}</span>
                         <button class="qty-btn-step" onclick="app.changeCartQty('${prod.id}', 1)" aria-label="Increase quantity">+</button>
                     </div>
                 `;
@@ -1433,16 +1501,16 @@ const app = {
                 weightOptions.forEach(w => {
                     if (w <= prod.stock) {
                         const isSelected = item.quantity === w ? 'selected' : '';
-                        const displayLabel = w === 0.25 ? '250 gm' : (w === 0.5 ? '500 gm' : `${w} kg`);
+                        const displayLabel = this.formatDisplayQuantity(prod.unit, w);
                         selectOptions += `<option value="${w}" ${isSelected}>${displayLabel}</option>`;
                     }
                 });
             } else {
                 const maxLimit = Math.min(prod.stock, 10);
-                const baseUnit = prod.unit.replace(/^[0-9.]+\s*/, '');
                 for (let w = 1; w <= maxLimit; w++) {
                     const isSelected = item.quantity === w ? 'selected' : '';
-                    selectOptions += `<option value="${w}" ${isSelected}>${w} ${baseUnit}</option>`;
+                    const displayLabel = this.formatDisplayQuantity(prod.unit, w);
+                    selectOptions += `<option value="${w}" ${isSelected}>${displayLabel}</option>`;
                 }
             }
 
@@ -1452,16 +1520,16 @@ const app = {
                 <img class="cart-item-img" src="${prod.image}" alt="${prod.name}">
                 <div class="cart-item-details">
                     <span class="cart-item-title">${prod.name}</span>
-                    <span class="cart-item-price">₹${prod.price} per ${prod.unit}</span>
+                    <span class="cart-item-price">₹${prod.price} / ${prod.unit}</span>
                     
                     <div class="cart-qty-dropdown-wrapper">
-                        <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-right:6px;">Qty:</label>
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-right:6px;">Quantity:</label>
                         <select class="cart-qty-select" onchange="app.updateCartItemQty('${prod.id}', parseFloat(this.value))">
                             ${selectOptions}
                         </select>
                     </div>
 
-                    <span class="cart-item-price-total">₹${itemCost}</span>
+                    <span class="cart-item-price-total">₹${itemCost.toFixed(2)}</span>
                 </div>
                 <button class="cart-item-remove" onclick="app.removeFromCart('${prod.id}')">
                     <span class="material-symbols-outlined">delete</span>
@@ -1697,10 +1765,15 @@ const app = {
             // Build items list markup in Rupees
             let itemsHtml = '';
             o.items.forEach(it => {
+                const itemSubtotal = (parseFloat(it.price || 0) * (it.quantity || 1)).toFixed(2);
+                const displayQty = this.formatDisplayQuantity(it.unit, it.quantity);
                 itemsHtml += `
-                    <li class="order-item-row">
-                        <span>${it.name} (x${it.quantity})</span>
-                        <strong>₹${it.price * it.quantity}</strong>
+                    <li class="order-item-row" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed var(--border);">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-weight:600; color:var(--text-primary);">${this.escapeHTML(it.name)}</span>
+                            <span class="mini-qty-badge">${displayQty}</span>
+                        </div>
+                        <strong style="color:var(--primary); font-size:0.9rem;">₹${itemSubtotal}</strong>
                     </li>
                 `;
             });
@@ -1805,8 +1878,269 @@ const app = {
     },
 
     // ----------------------------------------------------
-    // ADMIN DASHBOARD PANELS
+    // ADMIN DASHBOARD PANELS & HINDI LOCALIZATION
     // ----------------------------------------------------
+    vegetableHindiMap: {
+        'Desi Tomatoes (Tamatar)': 'देसी टमाटर (Tamatar)',
+        'Tomato (Tamatar)': 'देसी टमाटर (Tamatar)',
+        'Pahadi Potatoes (Aloo)': 'पहाड़ी आलू (Aloo)',
+        'Potato (Aloo)': 'पहाड़ी आलू (Aloo)',
+        'Nasik Red Onions (Pyaz)': 'नासिक लाल प्याज (Pyaz)',
+        'Onion (Pyaz)': 'नासिक लाल प्याज (Pyaz)',
+        'Fresh Cauliflower (Gobhi)': 'ताज़ा फूलगोभी (Gobhi)',
+        'Cauliflower (Gobhi)': 'ताज़ा फूलगोभी (Gobhi)',
+        'Organic Spinach (Palak)': 'देसी पालक (Palak)',
+        'Spinach (Palak)': 'देसी पालक (Palak)',
+        'Organic Broccoli Crowns': 'हरी ब्रोकोली (Broccoli)',
+        'Broccoli': 'हरी ब्रोकोली (Broccoli)',
+        'Farm Fresh Carrots (Gajar)': 'ताज़ा लाल गाजर (Gajar)',
+        'Carrot (Gajar)': 'ताज़ा लाल गाजर (Gajar)',
+        'Shimla Green Capsicum': 'शिमला मिर्च (Capsicum)',
+        'Capsicum (Shimla Mirch)': 'शिमला मिर्च (Capsicum)',
+        'Capsicum Yellow (Shimla Mirch)': 'पीली शिमला मिर्च (Yellow Capsicum)',
+        'Fresh Green Chillies (Hari Mirch)': 'तीखी हरी मिर्च (Hari Mirch)',
+        'Green Chilli (Hari Mirch)': 'तीखी हरी मिर्च (Hari Mirch)',
+        'Fresh Ginger Root (Adrak)': 'ताज़ा अदरक (Adrak)',
+        'Ginger (Adrak)': 'ताज़ा अदरक (Adrak)',
+        'Garlic Bulbs (Lahsun)': 'देसी लहसुन (Lahsun)',
+        'Garlic (Lahsun)': 'देसी लहसुन (Lahsun)',
+        'Fresh Coriander (Dhaniya)': 'हरा धनिया (Dhaniya)',
+        'Coriander (Dhaniya)': 'हरा धनिया (Dhaniya)',
+        'Bitter Gourd (Kakarakaya)': 'ताज़ा करेला (Karela)',
+        'Bitter Gourd': 'ताज़ा करेला (Karela)',
+        'Amaranth (Thotakura)': 'चौलाई / लाल साग (Amaranth)',
+        'Bottle Gourd (Lauki)': 'ताज़ा लौकी (Lauki)',
+        'Cabbage (Patta Gobhi)': 'पत्ता गोभी (Patta Gobhi)',
+        'Cucumber (Kheera)': 'ताज़ा खीरा (Kheera)',
+        'Ladyfinger (Bhindi)': 'ताज़ा भिंडी (Bhindi)',
+        'Brinjal (Baingan)': 'ताज़ा बैंगन (Baingan)',
+        'Mint Leaves (Pudina)': 'ताज़ा पुदीना (Pudina)',
+        'Fenugreek (Methi)': 'हरी मेथी (Methi)',
+        'Green Peas (Matar)': 'ताज़ा हरी मटर (Matar)',
+        'Radish (Mooli)': 'सफेद मूली (Mooli)',
+        'Beetroot (Chukandar)': 'चुकंदर (Beetroot)'
+    },
+
+    getVegName(name) {
+        if (!name) return '';
+        if (this.state.adminLanguage === 'hi') {
+            if (this.vegetableHindiMap[name]) return this.vegetableHindiMap[name];
+            // Check partial match
+            for (const [en, hi] of Object.entries(this.vegetableHindiMap)) {
+                if (name.toLowerCase().includes(en.toLowerCase().split(' ')[0])) {
+                    return hi;
+                }
+            }
+        }
+        return name;
+    },
+
+    adminI18n: {
+        en: {
+            title: 'Admin Operations Hub',
+            subtitle: 'Monitor harvest logs, dispatch community delivery trucks, and manage user lists.',
+            langBtn: 'हिंदी में बदलें (Hindi)',
+            mockBtn: 'Populate Live Mock Data',
+            statRevenue: 'Fulfillment Revenue',
+            statOrders: 'Fulfillment Bookings',
+            statUsers: 'Registered Locals',
+            statPromo: 'Launch Promo Claimed',
+            tabOrders: 'Truck Dispatch Manager',
+            tabInventory: 'Sourcing & Stock List',
+            tabUsers: 'Local Customer Directory',
+            filterSlot: 'Consolidated Delivery Slot',
+            filterStatus: 'Fulfillment Status',
+            slotAll: 'All Timings (Community-wide)',
+            statusAll: 'All Statuses',
+            colOrderId: 'Order ID',
+            colCustomer: 'Customer',
+            colItems: 'Ordered Items',
+            colSlot: 'Route Window',
+            colAddress: 'Address',
+            colTotal: 'Paid Total',
+            colStatus: 'Fulfillment Status',
+            colActions: 'Actions',
+            btnPack: 'Pack Order',
+            btnDispatch: 'Dispatch Truck',
+            btnConfirm: 'Confirm Delivery',
+            btnCancel: 'Cancel Order',
+            btnCompleted: 'Completed',
+            btnViewFull: 'View Full Order',
+            btnCollapse: 'Collapse Order',
+            btnInvoice: 'Invoice Modal',
+            modalTitle: 'Full Order Details',
+            modalCustomer: 'Customer Info',
+            modalCustName: 'Customer Name',
+            modalCustPhone: 'Phone Number',
+            modalSlot: 'Delivery Slot',
+            modalAddress: 'Delivery Address',
+            modalItems: 'Items Ordered',
+            modalPayment: 'Payment Summary',
+            modalPayStatus: 'Payment Status',
+            modalPayMethod: 'Payment Method',
+            modalTxnId: 'Transaction ID',
+            modalGrandTotal: 'Grand Total',
+            modalWaBtn: 'WhatsApp Customer',
+            modalClose: 'Close',
+            stockFormTitle: 'Register Farm Supply',
+            stockSyncBtn: 'Sync Inventory to DB',
+            stockProdName: 'Produce Name',
+            stockCategory: 'Category',
+            stockUnit: 'Selling Unit',
+            stockPrice: 'Farmer Sourcing Price (₹)',
+            stockFarm: 'Sourcing Origin / Farm',
+            stockQty: 'Harvest Stock Available',
+            stockSaveBtn: 'Save Harvest to Stock',
+            stockCancelBtn: 'Cancel Edit',
+            stockTableTitle: 'Active Harvest Inventory',
+            colProdName: 'Produce Name',
+            colCategory: 'Category',
+            colUnit: 'Unit',
+            colPrice: 'Price',
+            colStock: 'Stock',
+            btnEdit: 'Edit',
+            btnDelete: 'Delete',
+            usersTableTitle: 'Registered Local Sourcing Members'
+        },
+        hi: {
+            title: 'व्यवस्थापक प्रबंधन केंद्र (Admin Hub)',
+            subtitle: 'सब्ज़ियों के ऑर्डर, डिलीवरी ट्रक डिस्पैच और ग्राहकों का पूरा विवरण देखें।',
+            langBtn: 'Switch to English (अंग्रेज़ी)',
+            mockBtn: 'डेमो डेटा लोड करें',
+            statRevenue: 'कुल कमाई (Revenue)',
+            statOrders: 'कुल ऑर्डर (Orders)',
+            statUsers: 'पंजीकृत ग्राहक (Customers)',
+            statPromo: 'लॉन्च ऑफर ग्राहक',
+            tabOrders: '🚚 डिलीवरी एवं डिस्पैच (Orders)',
+            tabInventory: '🥦 सब्ज़ी व स्टॉक सूची (Stock)',
+            tabUsers: '👥 ग्राहक डायरेक्टरी (Users)',
+            filterSlot: 'डिलीवरी का समय (Delivery Slot)',
+            filterStatus: 'ऑर्डर की स्थिति (Status)',
+            slotAll: 'सभी समय (All Slots)',
+            statusAll: 'सभी स्थितियां (All Statuses)',
+            colOrderId: 'ऑर्डर ID',
+            colCustomer: 'ग्राहक (Customer)',
+            colItems: 'मंगवाई गई सब्ज़ियां (Items)',
+            colSlot: 'डिलीवरी समय',
+            colAddress: 'डिलीवरी का पता (Address)',
+            colTotal: 'कुल रकम (Total)',
+            colStatus: 'ऑर्डर स्थिति',
+            colActions: 'कार्रवाई (Actions)',
+            btnPack: 'पैकिंग शुरू करें',
+            btnDispatch: 'गाड़ी रवाना करें',
+            btnConfirm: 'डिलीवरी पूरी हुई',
+            btnCancel: 'ऑर्डर रद्द करें',
+            btnCompleted: 'पूरा हो गया',
+            btnViewFull: 'पूरा ऑर्डर देखें',
+            btnCollapse: 'ऑर्डर बंद करें',
+            btnInvoice: 'बिल / रसीद देखें',
+            modalTitle: 'ऑर्डर का पूरा विवरण (Order Invoice)',
+            modalCustomer: 'ग्राहक की जानकारी (Customer Info)',
+            modalCustName: 'ग्राहक का नाम',
+            modalCustPhone: 'मोबाइल नंबर',
+            modalSlot: 'डिलीवरी समय',
+            modalAddress: 'डिलीवरी का पता',
+            modalItems: 'मंगवाई गई सब्ज़ियों की सूची',
+            modalPayment: 'भुगतान की स्थिति (Payment Summary)',
+            modalPayStatus: 'भुगतान स्थिति',
+            modalPayMethod: 'भुगतान का तरीका',
+            modalTxnId: 'ट्रांजेक्शन ID',
+            modalGrandTotal: 'कुल देय राशि (Grand Total)',
+            modalWaBtn: 'ग्राहक को व्हाट्सएप करें',
+            modalClose: 'बंद करें',
+            stockFormTitle: 'नई सब्ज़ी जोड़ें / अपडेट करें',
+            stockSyncBtn: 'डेटाबेस में सिंक करें',
+            stockProdName: 'सब्ज़ी का नाम',
+            stockCategory: 'श्रेणी (Category)',
+            stockUnit: 'मात्रा इकाई (Unit)',
+            stockPrice: 'मूल्य (₹ प्रति किलो/यूनिट)',
+            stockFarm: 'खेत / मंडी का स्रोत',
+            stockQty: 'उपलब्ध स्टॉक (Stock)',
+            stockSaveBtn: 'स्टॉक में सुरक्षित करें',
+            stockCancelBtn: 'रद्द करें',
+            stockTableTitle: 'उपलब्ध सब्ज़ियों का स्टॉक (Inventory)',
+            colProdName: 'सब्ज़ी का नाम',
+            colCategory: 'श्रेणी',
+            colUnit: 'इकाई',
+            colPrice: 'मूल्य (₹)',
+            colStock: 'स्टॉक',
+            btnEdit: 'बदलें (Edit)',
+            btnDelete: 'हटाएं (Delete)',
+            usersTableTitle: 'पंजीकृत स्थानीय ग्राहकों की सूची'
+        }
+    },
+
+    toggleAdminLanguage() {
+        this.state.adminLanguage = this.state.adminLanguage === 'hi' ? 'en' : 'hi';
+        localStorage.setItem('gudiyamart_admin_lang', this.state.adminLanguage);
+        
+        const isHindi = this.state.adminLanguage === 'hi';
+        this.showToast(isHindi ? "व्यवस्थापक पैनल अब हिंदी में है" : "Admin panel switched to English", "success");
+        
+        this.applyAdminLanguage();
+        this.renderAdmin();
+    },
+
+    applyAdminLanguage() {
+        const lang = this.state.adminLanguage || 'en';
+        const t = this.adminI18n[lang] || this.adminI18n.en;
+
+        const mainTitle = document.getElementById('admin-main-title');
+        const mainSubtitle = document.getElementById('admin-main-subtitle');
+        const langBtnText = document.getElementById('admin-lang-btn-text');
+        const mockBtnText = document.getElementById('admin-seed-mock-text');
+
+        if (mainTitle) mainTitle.textContent = t.title;
+        if (mainSubtitle) mainSubtitle.textContent = t.subtitle;
+        if (langBtnText) langBtnText.textContent = t.langBtn;
+        if (mockBtnText) mockBtnText.textContent = t.mockBtn;
+
+        // Subtabs
+        const tabOrders = document.getElementById('subtab-orders');
+        const tabInventory = document.getElementById('subtab-inventory');
+        const tabUsers = document.getElementById('subtab-users');
+
+        if (tabOrders) tabOrders.innerHTML = `<span class="material-symbols-outlined">receipt_long</span> ${t.tabOrders}`;
+        if (tabInventory) tabInventory.innerHTML = `<span class="material-symbols-outlined">inventory_2</span> ${t.tabInventory}`;
+        if (tabUsers) tabUsers.innerHTML = `<span class="material-symbols-outlined">group_work</span> ${t.tabUsers}`;
+
+        // Stat Card Titles
+        const statRevenueLabel = document.querySelector('#admin-stat-revenue')?.previousElementSibling;
+        const statOrdersLabel = document.querySelector('#admin-stat-orders')?.previousElementSibling;
+        const statUsersLabel = document.querySelector('#admin-stat-users')?.previousElementSibling;
+        const statPromoLabel = document.querySelector('#admin-stat-promo')?.previousElementSibling;
+
+        if (statRevenueLabel) statRevenueLabel.textContent = t.statRevenue;
+        if (statOrdersLabel) statOrdersLabel.textContent = t.statOrders;
+        if (statUsersLabel) statUsersLabel.textContent = t.statUsers;
+        if (statPromoLabel) statPromoLabel.textContent = t.statPromo;
+
+        // Filters
+        const filterSlotLabel = document.querySelector('label[for="admin-filter-slot"]');
+        const filterStatusLabel = document.querySelector('label[for="admin-filter-status"]');
+        if (filterSlotLabel) filterSlotLabel.textContent = t.filterSlot;
+        if (filterStatusLabel) filterStatusLabel.textContent = t.filterStatus;
+
+        // Orders Table Headers
+        const ordersTableHead = document.querySelector('#admin-orders-table thead tr');
+        if (ordersTableHead) {
+            ordersTableHead.innerHTML = `
+                <th>${t.colOrderId}</th>
+                <th>${t.colCustomer}</th>
+                <th>${t.colItems}</th>
+                <th>${t.colSlot}</th>
+                <th>${t.colAddress}</th>
+                <th>${t.colTotal}</th>
+                <th>${t.colStatus}</th>
+                <th>${t.colActions}</th>
+            `;
+        }
+
+        // Product Form Title & Sync
+        const productFormTitle = document.getElementById('product-form-title');
+        if (productFormTitle) productFormTitle.textContent = t.stockFormTitle;
+    },
+
     renderAdmin() {
         const authAlert = document.getElementById('admin-auth-alert');
         const dashboard = document.getElementById('admin-dashboard-content');
@@ -1819,6 +2153,8 @@ const app = {
 
         authAlert.classList.add('hidden');
         dashboard.classList.remove('hidden');
+
+        this.applyAdminLanguage();
 
         // Calculate statistics summary in Rupees
         const totalRevenue = this.state.orders
@@ -1852,6 +2188,9 @@ const app = {
 
         tbody.innerHTML = '';
 
+        const isHindi = this.state.adminLanguage === 'hi';
+        const t = this.adminI18n[this.state.adminLanguage || 'en'] || this.adminI18n.en;
+
         const slotFilter = document.getElementById('admin-filter-slot').value;
         const statusFilter = document.getElementById('admin-filter-status').value;
 
@@ -1869,33 +2208,60 @@ const app = {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="8" class="text-center" style="padding: 30px;">
-                        No orders match the current dispatch filter criteria.
+                        ${isHindi ? 'कोई ऑर्डर इस फ़िल्टर में नहीं मिला।' : 'No orders match the current dispatch filter criteria.'}
                     </td>
                 </tr>
             `;
             return;
         }
 
+        const getStatusBadgeHtml = (status) => {
+            const badgeClass = status.toLowerCase().replace(/ /g, '-');
+            let displayStatus = status;
+            if (isHindi) {
+                if (status === 'Pending') displayStatus = 'स्वीकृति बाकी (Pending)';
+                else if (status === 'Packing') displayStatus = 'पैकिंग हो रही है (Packing)';
+                else if (status === 'Out for Delivery') displayStatus = 'गाड़ी रवाना (Out for Delivery)';
+                else if (status === 'Delivered') displayStatus = 'डिलीवर हो गया (Delivered)';
+                else if (status === 'Cancelled') displayStatus = 'रद्द (Cancelled)';
+            }
+            return `<span class="order-status-badge ${badgeClass}">${displayStatus}</span>`;
+        };
+
         filtered.forEach(o => {
             const tr = document.createElement('tr');
-            const itemsSummary = o.items.map(it => `${it.name} (x${it.quantity})`).join(', ');
-            const badgeClass = o.status.toLowerCase().replace(/ /g, '-');
-            const statusBadge = `<span class="order-status-badge ${badgeClass}">${o.status}</span>`;
+            const statusBadge = getStatusBadgeHtml(o.status);
 
             let actionsHtml = '';
             if (o.status === 'Pending') {
-                actionsHtml = `<button class="btn btn-primary btn-sm" onclick="app.updateOrderStatus('${o.id}', 'Packing')">Pack Order</button>`;
+                actionsHtml = `<button class="btn btn-primary btn-sm" onclick="app.updateOrderStatus('${o.id}', 'Packing')">${t.btnPack}</button>`;
             } else if (o.status === 'Packing') {
-                actionsHtml = `<button class="btn btn-warning btn-sm" style="color:white;" onclick="app.updateOrderStatus('${o.id}', 'Out for Delivery')">Dispatch Truck</button>`;
+                actionsHtml = `<button class="btn btn-warning btn-sm" style="color:white;" onclick="app.updateOrderStatus('${o.id}', 'Out for Delivery')">${t.btnDispatch}</button>`;
             } else if (o.status === 'Out for Delivery') {
-                actionsHtml = `<button class="btn btn-success btn-sm" onclick="app.updateOrderStatus('${o.id}', 'Delivered')">Confirm Delivery</button>`;
+                actionsHtml = `<button class="btn btn-success btn-sm" onclick="app.updateOrderStatus('${o.id}', 'Delivered')">${t.btnConfirm}</button>`;
             } else {
-                actionsHtml = `<span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Completed</span>`;
+                actionsHtml = `<span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">${t.btnCompleted}</span>`;
             }
 
             if (o.status !== 'Delivered' && o.status !== 'Cancelled') {
-                actionsHtml += ` <button class="btn btn-danger btn-sm" style="padding: 6px;" onclick="app.updateOrderStatus('${o.id}', 'Cancelled')" title="Cancel Order"><span class="material-symbols-outlined" style="font-size:0.9rem;">cancel</span></button>`;
+                actionsHtml += ` <button class="btn btn-danger btn-sm" style="padding: 6px;" onclick="app.updateOrderStatus('${o.id}', 'Cancelled')" title="${t.btnCancel}"><span class="material-symbols-outlined" style="font-size:0.9rem;">cancel</span></button>`;
             }
+
+            // Render every ordered item in a structured tabular mini-table (ITEM | QUANTITY | TOTAL)
+            const allItemsTableRows = o.items.map(it => {
+                const subtotal = (parseFloat(it.price || 0) * (it.quantity || 1)).toFixed(2);
+                const displayQty = this.formatDisplayQuantity(it.unit, it.quantity);
+                const displayName = this.getVegName(it.name);
+                return `
+                    <tr>
+                        <td class="order-mini-name">${this.escapeHTML(displayName)}</td>
+                        <td class="order-mini-qty"><span class="mini-qty-badge">${displayQty}</span></td>
+                        <td class="order-mini-total">₹${subtotal}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const shortItemsPreview = o.items.map(it => `${this.getVegName(it.name)} (${this.formatDisplayQuantity(it.unit, it.quantity)})`).join(', ');
 
             tr.innerHTML = `
                 <td><strong>#${this.escapeHTML(o.id)}</strong></td>
@@ -1903,12 +2269,42 @@ const app = {
                     <div style="font-weight:700;">${this.escapeHTML(o.userName)}</div>
                     <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHTML(o.userPhone)}</div>
                 </td>
-                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${itemsSummary}">${itemsSummary}</td>
+                <td class="admin-order-items-cell">
+                    <div class="order-summary-compact">
+                        <span class="order-item-count-badge">${o.items.length} ${isHindi ? 'सब्ज़ियां' : (o.items.length > 1 ? 'Items' : 'Item')}</span>
+                        <span class="order-summary-text" title="${this.escapeHTML(shortItemsPreview)}">${this.escapeHTML(shortItemsPreview)}</span>
+                    </div>
+
+                    <div class="order-expand-actions">
+                        <button class="btn-toggle-order-expand" onclick="app.toggleOrderExpand('${o.id}')" id="btn-expand-${o.id}">
+                            <span class="material-symbols-outlined" id="icon-expand-${o.id}">expand_more</span>
+                            <span id="text-expand-${o.id}">${t.btnViewFull}</span>
+                        </button>
+                        <button class="btn-view-order-details" onclick="app.showAdminOrderDetails('${o.id}')" title="${t.btnInvoice}">
+                            <span class="material-symbols-outlined" style="font-size:0.85rem;">receipt_long</span> ${t.btnInvoice}
+                        </button>
+                    </div>
+
+                    <div class="admin-order-items-table-wrapper hidden" id="order-items-wrapper-${o.id}">
+                        <table class="admin-order-mini-table">
+                            <thead>
+                                <tr>
+                                    <th>${isHindi ? 'सब्ज़ी का नाम' : 'Item'}</th>
+                                    <th>${isHindi ? 'मात्रा (Quantity)' : 'Quantity'}</th>
+                                    <th>${isHindi ? 'कुल रकम' : 'Total'}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${allItemsTableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
                 <td><span class="slot-badge">${this.escapeHTML(o.deliverySlot)}</span></td>
-                <td style="max-width: 200px; font-size:0.8rem;" title="${this.escapeHTML(o.deliveryAddress)}">${this.escapeHTML(o.deliveryAddress)}</td>
+                <td style="max-width: 180px; font-size:0.8rem;" title="${this.escapeHTML(o.deliveryAddress)}">${this.escapeHTML(o.deliveryAddress)}</td>
                 <td>
                     <strong>₹${o.total}</strong>
-                    <div style="font-size:0.72rem; color:#119a7e; font-weight:700;">${o.paymentStatus === 'Paid' ? `Paid (${o.paymentMethod})` : 'Unpaid'}</div>
+                    <div style="font-size:0.72rem; color:#119a7e; font-weight:700;">${o.paymentStatus === 'Paid' ? (isHindi ? `भुगतान हो गया (${o.paymentMethod})` : `Paid (${o.paymentMethod})`) : (isHindi ? 'बाकी (Unpaid)' : 'Unpaid')}</div>
                     ${o.transactionId && o.transactionId !== 'None' ? `<div style="font-size:0.65rem; color:var(--text-muted); font-family:monospace; line-height:1; margin-top:2px;">${o.transactionId}</div>` : ''}
                 </td>
                 <td>${statusBadge}</td>
@@ -1917,6 +2313,114 @@ const app = {
 
             tbody.appendChild(tr);
         });
+    },
+
+    // Toggle in-table full order items breakdown
+    toggleOrderExpand(orderId) {
+        const wrapper = document.getElementById(`order-items-wrapper-${orderId}`);
+        const btnText = document.getElementById(`text-expand-${orderId}`);
+        const btnIcon = document.getElementById(`icon-expand-${orderId}`);
+        if (!wrapper) return;
+
+        const isHindi = this.state.adminLanguage === 'hi';
+        const t = this.adminI18n[this.state.adminLanguage || 'en'] || this.adminI18n.en;
+
+        const isHidden = wrapper.classList.contains('hidden');
+        if (isHidden) {
+            wrapper.classList.remove('hidden');
+            if (btnText) btnText.textContent = t.btnCollapse;
+            if (btnIcon) btnIcon.textContent = 'expand_less';
+        } else {
+            wrapper.classList.add('hidden');
+            if (btnText) btnText.textContent = t.btnViewFull;
+            if (btnIcon) btnIcon.textContent = 'expand_more';
+        }
+    },
+
+    // Show full order details in modal (admin)
+    showAdminOrderDetails(orderId) {
+        const o = this.state.orders.find(x => x.id === orderId);
+        if (!o) return;
+
+        const overlay = document.getElementById('admin-order-modal-overlay');
+        const title = document.getElementById('order-modal-title');
+        const subtitle = document.getElementById('order-modal-subtitle');
+        const body = document.getElementById('order-modal-body');
+        if (!overlay || !body) return;
+
+        const isHindi = this.state.adminLanguage === 'hi';
+        const t = this.adminI18n[this.state.adminLanguage || 'en'] || this.adminI18n.en;
+
+        title.textContent = isHindi ? `ऑर्डर #${o.id} - बिल विवरण` : `Order #${o.id}`;
+        subtitle.textContent = isHindi 
+            ? `ऑर्डर समय: ${new Date(o.orderedAt).toLocaleString('hi-IN', { dateStyle: 'medium', timeStyle: 'short' })}`
+            : `Placed on ${new Date(o.orderedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}`;
+
+        const itemRows = o.items.map(it => {
+            const subtotal = (parseFloat(it.price || 0) * (it.quantity || 1)).toFixed(2);
+            const displayQty = this.formatDisplayQuantity(it.unit, it.quantity);
+            const displayName = this.getVegName(it.name);
+            return `
+                <tr>
+                    <td style="padding:10px 12px;">
+                        <div style="font-weight:700; color:var(--text-primary);">${this.escapeHTML(displayName)}</div>
+                    </td>
+                    <td style="padding:10px 12px; text-align:center;"><span class="mini-qty-badge" style="font-size:0.82rem; padding:3px 8px;">${displayQty}</span></td>
+                    <td style="padding:10px 12px; text-align:right; font-weight:700; color:var(--primary); font-size:0.9rem;">₹${subtotal}</td>
+                </tr>`;
+        }).join('');
+
+        body.innerHTML = `
+            <div class="order-modal-section">
+                <h4 class="order-modal-section-title"><span class="material-symbols-outlined">person</span> ${t.modalCustomer}</h4>
+                <div class="order-modal-info-grid">
+                    <div class="order-modal-info-item"><span class="info-label">${t.modalCustName}</span><span class="info-value">${this.escapeHTML(o.userName)}</span></div>
+                    <div class="order-modal-info-item"><span class="info-label">${t.modalCustPhone}</span><span class="info-value">${this.escapeHTML(o.userPhone)}</span></div>
+                    <div class="order-modal-info-item"><span class="info-label">${t.modalSlot}</span><span class="info-value slot-badge">${this.escapeHTML(o.deliverySlot)}</span></div>
+                    <div class="order-modal-info-item" style="grid-column:1/-1;"><span class="info-label">${t.modalAddress}</span><span class="info-value">${this.escapeHTML(o.deliveryAddress)}</span></div>
+                </div>
+            </div>
+
+            <div class="order-modal-section">
+                <h4 class="order-modal-section-title"><span class="material-symbols-outlined">shopping_basket</span> ${t.modalItems} (${o.items.length})</h4>
+                <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg-card);">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <thead>
+                            <tr style="background:var(--bg-card-hover); border-bottom:1px solid var(--border);">
+                                <th style="padding:10px 12px; text-align:left; font-size:0.75rem; text-transform:uppercase; color:var(--text-secondary);">${isHindi ? 'सब्ज़ी का नाम' : 'Item'}</th>
+                                <th style="padding:10px 12px; text-align:center; font-size:0.75rem; text-transform:uppercase; color:var(--text-secondary);">${isHindi ? 'मात्रा (Quantity)' : 'Quantity'}</th>
+                                <th style="padding:10px 12px; text-align:right; font-size:0.75rem; text-transform:uppercase; color:var(--text-secondary);">${isHindi ? 'कुल रकम (Total)' : 'Total'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>${itemRows}</tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="order-modal-section">
+                <h4 class="order-modal-section-title"><span class="material-symbols-outlined">payments</span> ${t.modalPayment}</h4>
+                <div class="order-modal-info-grid">
+                    <div class="order-modal-info-item"><span class="info-label">${t.modalPayStatus}</span><span class="info-value" style="color:${o.paymentStatus === 'Paid' ? '#119a7e' : '#e74c3c'}; font-weight:800;">${o.paymentStatus === 'Paid' ? (isHindi ? 'भुगतान प्राप्त (Paid)' : 'Paid') : (isHindi ? 'बाकी (Unpaid)' : 'Unpaid')}</span></div>
+                    <div class="order-modal-info-item"><span class="info-label">${t.modalPayMethod}</span><span class="info-value">${this.escapeHTML(o.paymentMethod || '—')}</span></div>
+                    ${o.transactionId && o.transactionId !== 'None' ? `<div class="order-modal-info-item" style="grid-column:1/-1;"><span class="info-label">${t.modalTxnId}</span><span class="info-value" style="font-family:monospace; font-size:0.8rem;">${this.escapeHTML(o.transactionId)}</span></div>` : ''}
+                    <div class="order-modal-info-item order-modal-total">
+                        <span class="info-label" style="font-size:0.9rem; font-weight:700;">${t.modalGrandTotal}</span>
+                        <span class="info-value order-grand-total">₹${o.total}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-modal-footer-actions">
+                <a href="https://wa.me/91${this.escapeHTML(o.userPhone)}?text=Hi%20${encodeURIComponent(o.userName)}!%20Your%20Gudiya%20Mart%20order%20%23${o.id}%20is%20being%20processed." target="_blank" class="btn btn-success btn-sm" style="display:inline-flex; align-items:center; gap:6px; background:#25D366; color:#ffffff; padding:8px 16px; border-radius:6px; font-weight:700;">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">chat</span> ${t.modalWaBtn}
+                </a>
+                <button class="btn btn-secondary btn-sm" style="padding:8px 16px; border-radius:6px;" onclick="document.getElementById('admin-order-modal-overlay').classList.add('hidden')">
+                    ${t.modalClose}
+                </button>
+            </div>
+        `;
+
+        overlay.classList.remove('hidden');
     },
 
     // Admin Dispatch Update Status
@@ -1957,24 +2461,43 @@ const app = {
 
         tbody.innerHTML = '';
 
+        const isHindi = this.state.adminLanguage === 'hi';
+        const t = this.adminI18n[this.state.adminLanguage || 'en'] || this.adminI18n.en;
+
+        // Update Inventory Table Headers if present
+        const invHead = document.querySelector('#admin-inventory-tab thead tr');
+        if (invHead) {
+            invHead.innerHTML = `
+                <th>${isHindi ? 'फोटो' : 'Image'}</th>
+                <th>${t.colProdName}</th>
+                <th>${t.colCategory}</th>
+                <th>${t.colPrice}</th>
+                <th>${t.colStock}</th>
+                <th>${isHindi ? 'कार्रवाई' : 'Actions'}</th>
+            `;
+        }
+
         this.state.products.forEach(prod => {
             const tr = document.createElement('tr');
+            const displayName = this.getVegName(prod.name);
+            const displayUnit = this.formatDisplayQuantity(prod.unit, 1);
             tr.innerHTML = `
                 <td><img class="table-img" src="${prod.image}" alt="${prod.name}"></td>
                 <td>
-                    <div style="font-weight:700;">${prod.name}</div>
+                    <div style="font-weight:700;">${this.escapeHTML(displayName)}</div>
+                    ${isHindi && displayName !== prod.name ? `<div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHTML(prod.name)}</div>` : ''}
                 </td>
                 <td><span class="category-chip active" style="font-size:0.75rem; padding:4px 8px;">${prod.category}</span></td>
-                <td>₹${prod.price} / ${prod.unit}</td>
+                <td>₹${prod.price} / ${displayUnit}</td>
                 <td>
                     <span style="font-weight:700; color: ${prod.stock < 10 ? '#cc4d29' : 'inherit'}">
                         ${prod.stock}
-                    </span> units
+                    </span> ${isHindi ? 'यूनिट' : 'units'}
                 </td>
                 <td>
                     <div class="table-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="app.editProduct('${prod.id}')">Edit</button>
-                        <button class="btn btn-danger btn-sm" onclick="app.deleteProduct('${prod.id}')">Delete</button>
+                        <button class="btn btn-secondary btn-sm" onclick="app.editProduct('${prod.id}')">${t.btnEdit}</button>
+                        <button class="btn btn-danger btn-sm" onclick="app.deleteProduct('${prod.id}')">${t.btnDelete}</button>
                     </div>
                 </td>
             `;
@@ -2116,13 +2639,28 @@ const app = {
 
         tbody.innerHTML = '';
 
+        const isHindi = this.state.adminLanguage === 'hi';
+        const t = this.adminI18n[this.state.adminLanguage || 'en'] || this.adminI18n.en;
+
+        const usersHead = document.querySelector('#admin-users-tab thead tr');
+        if (usersHead) {
+            usersHead.innerHTML = `
+                <th>${isHindi ? 'ग्राहक का नाम' : 'Customer'}</th>
+                <th>${isHindi ? 'ईमेल' : 'Email'}</th>
+                <th>${isHindi ? 'मोबाइल नंबर' : 'Phone'}</th>
+                <th>${isHindi ? 'डिलीवरी पता' : 'Address'}</th>
+                <th>${isHindi ? 'ऑफ़र स्थिति' : 'Promo Status'}</th>
+                <th>${isHindi ? 'पंजीकरण तारीख' : 'Registered Date'}</th>
+            `;
+        }
+
         const customers = this.state.users.filter(u => !u.isAdmin);
 
         if (customers.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="text-center" style="padding: 20px;">
-                        No registered customers yet.
+                        ${isHindi ? 'अभी तक कोई पंजीकृत ग्राहक नहीं हैं।' : 'No registered customers yet.'}
                     </td>
                 </tr>
             `;
@@ -2134,10 +2672,10 @@ const app = {
         customers.forEach(u => {
             const tr = document.createElement('tr');
             const promoBadge = u.isPromoMember
-                ? '<span class="order-status-badge delivered" style="font-size:0.7rem;">Promo Active</span>'
-                : '<span class="order-status-badge cancelled" style="font-size:0.7rem; background-color:#e2e8f0; color:#475569;">No Promo</span>';
+                ? `<span class="order-status-badge delivered" style="font-size:0.7rem;">${isHindi ? 'ऑफर सक्रिय (Active)' : 'Promo Active'}</span>`
+                : `<span class="order-status-badge cancelled" style="font-size:0.7rem; background-color:#e2e8f0; color:#475569;">${isHindi ? 'सामान्य' : 'No Promo'}</span>`;
 
-            const joinDate = new Date(u.joinedAt).toLocaleDateString('en-IN', {
+            const joinDate = new Date(u.joinedAt).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN', {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric'
