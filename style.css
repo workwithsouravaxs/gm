@@ -975,7 +975,10 @@ img {
 }
 
 .product-stock-lbl.in-stock {
-    color: var(--text-muted);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 /* Authentic Customer Portals card */
@@ -1414,7 +1417,7 @@ img {
 .drawer-overlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(43, 39, 36, 0.4); /* warm backdrop */
+    background-color: rgba(43, 39, 36, 0.45);
     backdrop-filter: blur(4px);
     z-index: 200;
     opacity: 0;
@@ -1430,18 +1433,21 @@ img {
 .cart-drawer {
     position: fixed;
     top: 0;
-    right: -440px;
+    right: -480px;
     width: 100%;
     max-width: 440px;
     height: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
     background-color: var(--bg-card);
     box-shadow: var(--shadow-xl);
     z-index: 201;
     display: flex;
     flex-direction: column;
-    transition: right 0.5s cubic-bezier(0.25, 1.25, 0.5, 1);
+    transition: right 0.35s cubic-bezier(0.25, 1.25, 0.5, 1);
     border-left: 1px solid var(--border);
     will-change: right;
+    overflow: hidden;
 }
 
 .cart-drawer.open {
@@ -1449,12 +1455,13 @@ img {
 }
 
 .drawer-header {
-    padding: 20px 24px;
+    padding: 12px 18px;
     border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: var(--bg-card-hover);
+    flex-shrink: 0;
 }
 
 .drawer-title {
@@ -1464,13 +1471,14 @@ img {
 }
 
 .drawer-title h2 {
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     font-family: 'Fraunces', serif;
+    margin: 0;
 }
 
 .drawer-close {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: var(--radius-full);
     display: flex;
     align-items: center;
@@ -1479,6 +1487,7 @@ img {
     color: var(--text-secondary);
     transition: var(--transition-fast);
     background-color: var(--bg-card);
+    cursor: pointer;
 }
 
 .drawer-close:hover {
@@ -1487,9 +1496,13 @@ img {
 }
 
 .drawer-body {
-    flex-grow: 1;
+    flex: 1 1 auto;
     overflow-y: auto;
-    padding: 24px;
+    overscroll-behavior: contain;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .cart-empty-state {
@@ -1498,103 +1511,106 @@ img {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 12px;
     text-align: center;
     color: var(--text-muted);
+    padding: 30px 16px;
 }
 
 .cart-empty-state span {
-    font-size: 3.5rem;
+    font-size: 2.8rem;
     color: var(--text-muted);
 }
 
 .cart-items-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
 }
 
 .cart-item {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     background-color: var(--bg-main);
     border-radius: var(--radius-md);
-    padding: 12px;
+    padding: 8px 10px;
     border: 1px solid var(--border);
     position: relative;
+    align-items: center;
 }
 
 .cart-item-img {
-    width: 64px;
-    height: 64px;
+    width: 48px;
+    height: 48px;
     object-fit: cover;
     border-radius: var(--radius-sm);
     background-color: var(--border);
+    flex-shrink: 0;
 }
 
 .cart-item-details {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
 .cart-item-title {
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-family: 'Fraunces', serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 20px;
 }
 
 .cart-item-price {
-    font-size: 0.8rem;
+    font-size: 0.74rem;
     color: var(--text-muted);
+}
+
+.cart-qty-dropdown-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.cart-qty-select {
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background-color: var(--bg-card);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
 }
 
 .cart-item-price-total {
     font-weight: 800;
-    font-size: 0.95rem;
-    margin-top: 4px;
-}
-
-.cart-qty-ctrl {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-}
-
-.qty-btn {
-    width: 22px;
-    height: 22px;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: 700;
-    background-color: var(--bg-card);
-    transition: var(--transition-fast);
-}
-
-.qty-btn:hover {
-    background-color: var(--primary);
-    color: #ffffff;
-    border-color: var(--primary);
-}
-
-.qty-num {
     font-size: 0.85rem;
-    font-weight: 700;
-    min-width: 16px;
-    text-align: center;
+    color: var(--primary);
+    margin-left: auto;
+    padding-right: 22px;
 }
 
 .cart-item-remove {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
     color: var(--text-muted);
-    font-size: 1.1rem;
+    font-size: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .cart-item-remove:hover {
@@ -1605,30 +1621,41 @@ img {
     border: 0;
     height: 1px;
     background-color: var(--border);
-    margin: 24px 0;
+    margin: 6px 0;
 }
 
 /* Delivery Community Scheduling Grid */
 .cart-delivery-scheduler h3 {
-    font-size: 1.1rem;
+    font-size: 0.92rem;
     font-family: 'Fraunces', serif;
-    margin-bottom: 8px;
+    margin-bottom: 2px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .scheduler-explanation {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
-    margin-bottom: 16px;
-    line-height: 1.5;
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+
+.delivery-date-card {
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .delivery-time-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 6px;
 }
 
 .time-slot-option {
@@ -1643,13 +1670,14 @@ img {
     display: flex;
     flex-direction: column;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 12px;
+    border-radius: var(--radius-sm);
+    padding: 6px 4px;
     text-align: center;
     background-color: var(--bg-main);
     transition: var(--transition-fast);
     height: 100%;
     justify-content: center;
+    gap: 1px;
 }
 
 .time-slot-option input:checked + .time-slot-card {
@@ -1660,46 +1688,38 @@ img {
 
 .slot-time {
     font-family: 'Fraunces', serif;
-    font-weight: 600;
-    font-size: 1.05rem;
+    font-weight: 700;
+    font-size: 0.82rem;
     color: var(--text-primary);
 }
 
 .slot-desc {
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     color: var(--text-secondary);
-    margin-top: 2px;
 }
 
 .slot-community-stats {
-    margin-top: 8px;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 700;
     color: var(--primary);
-    background-color: rgba(45, 90, 39, 0.08);
-    padding: 2px 4px;
-    border-radius: var(--radius-sm);
-    display: inline-block;
-}
-
-.time-slot-option input:checked + .time-slot-card .slot-community-stats {
-    background-color: var(--primary);
-    color: #ffffff;
 }
 
 .cart-address-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+    margin-top: 4px;
 }
 
 .cart-address-wrapper textarea {
     width: 100%;
-    padding: 12px;
+    padding: 6px 8px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     resize: none;
     background-color: var(--bg-main);
+    font-size: 0.78rem;
+    min-height: 44px;
 }
 
 .cart-address-wrapper textarea:focus {
@@ -1707,53 +1727,94 @@ img {
     background-color: var(--bg-card);
 }
 
+/* Compact Drawer Footer */
 .drawer-footer {
-    padding: 24px;
+    padding: 10px 16px;
     border-top: 1px solid var(--border);
     background-color: var(--bg-card-hover);
+    flex-shrink: 0;
 }
 
-.cart-promo-alert {
-    background-color: var(--primary-light);
-    color: var(--primary);
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    font-size: 0.8rem;
-    font-weight: 700;
+.founding-benefit-box {
+    background: linear-gradient(135deg, rgba(45, 90, 39, 0.08) 0%, rgba(255, 165, 0, 0.08) 100%);
+    border: 1px solid rgba(45, 90, 39, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    margin-bottom: 6px;
+}
+
+.founding-benefit-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-    border: 1px solid rgba(45, 90, 39, 0.15);
+    gap: 4px;
+    font-size: 0.76rem;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px dashed rgba(45, 90, 39, 0.2);
+}
+
+.founding-benefit-grid {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.founding-benefit-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.founding-benefit-row span:last-child {
+    font-weight: 700;
+    color: var(--primary);
 }
 
 .price-summary {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 3px;
+    margin-bottom: 8px;
 }
 
 .summary-line {
     display: flex;
     justify-content: space-between;
-    font-size: 0.88rem;
+    font-size: 0.78rem;
     color: var(--text-secondary);
 }
 
-.discount-line {
-    color: var(--accent);
-    font-weight: 700;
-}
-
 .total-line {
-    font-size: 1.3rem;
-    font-weight: 700;
+    font-size: 1.1rem;
+    font-weight: 800;
     color: var(--text-primary);
     border-top: 1px solid var(--border);
-    padding-top: 12px;
-    margin-top: 4px;
+    padding-top: 4px;
+    margin-top: 2px;
     font-family: 'Fraunces', serif;
+}
+
+/* Mobile responsive drawer */
+@media (max-width: 600px) {
+    .cart-drawer {
+        width: 100vw;
+        max-width: 100vw;
+        right: -100vw;
+    }
+    .drawer-header {
+        padding: 10px 14px;
+    }
+    .drawer-body {
+        padding: 10px 14px;
+    }
+    .drawer-footer {
+        padding: 8px 14px max(10px, env(safe-area-inset-bottom));
+    }
 }
 
 /* Trust-heavy Modern Footer styles */

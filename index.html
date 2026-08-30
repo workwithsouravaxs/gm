@@ -267,25 +267,21 @@
                 </div>
             </div>
             
-            <!-- Launch Offer Card overlaid (static element) -->
+            <!-- Founding Member Benefits Card overlaid -->
             <div class="hero-promo-container container">
                 <div class="promo-card">
                     <div class="promo-info">
                         <span class="material-symbols-outlined promo-icon">workspace_premium</span>
                         <div class="promo-text">
-                            <h3>Founding Member Initiative</h3>
-                            <p>Be one of the first 100 users in your neighborhood to get <strong>10% OFF</strong> and <strong>FREE delivery</strong> for the entire month.</p>
+                            <h3>Founding Member Benefit Applied 🎉</h3>
+                            <p><strong>Platform Fee: ₹0</strong> • <strong>Delivery Fee: ₹0</strong> • <strong>Additional Charges: ₹0</strong></p>
                         </div>
                     </div>
                     <div class="promo-counter">
                         <div class="counter-ring">
-                            <svg class="ring-svg" width="70" height="70">
-                                <circle class="ring-bg" cx="35" cy="35" r="30"></circle>
-                                <circle class="ring-fill" id="promo-progress-ring" cx="35" cy="35" r="30"></circle>
-                            </svg>
-                            <span class="counter-number" id="promo-spots-left">100</span>
+                            <span class="material-symbols-outlined" style="font-size: 2.2rem; color: var(--primary);">verified</span>
                         </div>
-                        <span class="counter-label">Spots Left</span>
+                        <span class="counter-label" style="color: var(--primary); font-weight: 800;">100% FREE</span>
                     </div>
                 </div>
             </div>
@@ -337,7 +333,7 @@
                         <span class="material-symbols-outlined launch-notice-icon">event_upcoming</span>
                         <div class="launch-notice-text">
                             <h3>🎉 Orders Open from <span class="launch-date-highlight">1st September 2026</span></h3>
-                            <p>We're launching soon! Register now to secure your <strong>Founding Member</strong> spot &amp; get <strong>10% OFF + Free Delivery</strong> for the first month.</p>
+                            <p>Founding Member Benefits: <strong>₹0 Platform Fee • ₹0 Delivery Fee • ₹0 Additional Charges</strong> on all orders.</p>
                         </div>
                     </div>
                     <div class="launch-whatsapp-cta">
@@ -449,12 +445,10 @@
                         <div class="stats-panel">
                             <h4>Consolidated Route Timings</h4>
                             <ul class="slot-list-info">
-                                <li><span class="slot-badge">7:00 AM</span> Dew Fresh Delivery</li>
-                                <li><span class="slot-badge">2:00 PM</span> Mid-day Harvest</li>
-                                <li><span class="slot-badge">5:00 PM</span> Sunset Kitchen Prep</li>
-                                <li><span class="slot-badge">9:00 PM</span> Night Convenience</li>
+                                <li><span class="slot-badge">9:00 - 10:00 AM</span> Morning Fresh Harvest</li>
+                                <li><span class="slot-badge">5:00 - 6:00 PM</span> Evening Kitchen Prep</li>
                             </ul>
-                            <p class="slot-hint">Order with neighbors to ensure consolidated truck routing.</p>
+                            <p class="slot-hint">Direct farm-to-doorstep shared logistics.</p>
                         </div>
                     </div>
                 </aside>
@@ -608,11 +602,11 @@
                         <!-- Sign Up Form -->
                         <form id="register-form" class="auth-form hidden">
                             <h2>Join Our Community Sourcing</h2>
-                            <p class="form-desc">First 100 members receive 10% OFF & free deliveries for a month! All data is securely stored.</p>
+                            <p class="form-desc">Register today to secure Founding Member Benefits: 100% Free Delivery, ₹0 Platform Fee &amp; ₹0 Additional Charges!</p>
                             
                             <div class="promo-spots-alert" id="register-promo-badge">
-                                <span class="material-symbols-outlined">campaign</span>
-                                <span id="register-promo-text">Hurry! Launch promo spots are still available.</span>
+                                <span class="material-symbols-outlined">verified</span>
+                                <span id="register-promo-text">Founding Member Benefit Applied: Platform Fee ₹0 • Delivery Fee ₹0 • Additional Charges ₹0</span>
                             </div>
 
                             <div class="form-group">
@@ -945,70 +939,66 @@
 
                 <!-- Community Dispatch Scheduler -->
                 <div class="cart-delivery-scheduler">
-                    <h3>
-                        <span class="material-symbols-outlined">schedule</span>
-                        Consolidated Route Scheduler
-                    </h3>
-                    <p class="scheduler-explanation">Choose a structured community dispatch time. We consolidate neighborhood orders to minimize vehicle mileage, preserve cold-chain, and assure dawn freshness.</p>
-                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <h3 style="margin:0; font-size:0.88rem; display:flex; align-items:center; gap:4px;">
+                            <span class="material-symbols-outlined text-primary" style="font-size:1.05rem;">event_available</span>
+                            Delivery Slot
+                        </h3>
+                        <span id="cart-auto-delivery-date" style="font-size:0.75rem; font-weight:700; color:var(--primary); background:var(--primary-light); padding:2px 8px; border-radius:var(--radius-sm);">Today, 31 Aug 2026</span>
+                    </div>
+
                     <div class="delivery-time-grid">
                         <label class="time-slot-option">
-                            <input type="radio" name="delivery-time" value="7:00 AM" checked>
+                            <input type="radio" name="delivery-time" value="9:00 AM - 10:00 AM (Morning)" checked>
                             <span class="time-slot-card">
-                                <span class="slot-time">7:00 AM</span>
-                                <span class="slot-desc">Dew Fresh morning</span>
-                                <span class="slot-community-stats" id="neigh-count-7">5 neighbors opted</span>
+                                <span class="slot-time">🌅 9:00 - 10:00 AM</span>
+                                <span class="slot-desc">Morning Harvest</span>
                             </span>
                         </label>
                         
                         <label class="time-slot-option">
-                            <input type="radio" name="delivery-time" value="2:00 PM">
+                            <input type="radio" name="delivery-time" value="5:00 PM - 6:00 PM (Evening)">
                             <span class="time-slot-card">
-                                <span class="slot-time">2:00 PM</span>
-                                <span class="slot-desc">Mid-day harvest dispatch</span>
-                                <span class="slot-community-stats" id="neigh-count-2">2 neighbors opted</span>
-                            </span>
-                        </label>
-
-                        <label class="time-slot-option">
-                            <input type="radio" name="delivery-time" value="5:00 PM">
-                            <span class="time-slot-card">
-                                <span class="slot-time">5:00 PM</span>
-                                <span class="slot-desc">Sunset kitchen prep</span>
-                                <span class="slot-community-stats" id="neigh-count-5">8 neighbors opted</span>
-                            </span>
-                        </label>
-
-                        <label class="time-slot-option">
-                            <input type="radio" name="delivery-time" value="9:00 PM">
-                            <span class="time-slot-card">
-                                <span class="slot-time">9:00 PM</span>
-                                <span class="slot-desc">Night convenience</span>
-                                <span class="slot-community-stats" id="neigh-count-9">1 neighbor opted</span>
+                                <span class="slot-time">🌇 5:00 - 6:00 PM</span>
+                                <span class="slot-desc">Evening Harvest</span>
                             </span>
                         </label>
                     </div>
                 </div>
 
-                <hr class="drawer-divider">
-
                 <!-- Delivery Address -->
-                <div class="cart-address-wrapper" style="margin-top: 16px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-                        <label for="cart-delivery-address"><strong>Delivery Location:</strong></label>
-                        <button type="button" class="btn btn-secondary btn-sm" id="btn-use-saved-address" style="padding: 4px 8px; font-size: 0.72rem; height: auto;" onclick="app.useSavedProfileAddress()">Use Saved Address</button>
+                <div class="cart-address-wrapper">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label for="cart-delivery-address" style="font-size:0.8rem;"><strong>Delivery Address:</strong></label>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-use-saved-address" style="padding: 2px 6px; font-size: 0.68rem; height: auto;" onclick="app.useSavedProfileAddress()">Use Saved</button>
                     </div>
-                    <textarea id="cart-delivery-address" rows="2" placeholder="Type your delivery society, tower, flat number..." required></textarea>
-                    <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600; display:block; margin-top:6px;">⚠️ Online Prepaid only • Cash on Delivery (COD) not supported</span>
+                    <textarea id="cart-delivery-address" rows="1" placeholder="Society name, tower, flat no..." required style="height:36px; min-height:36px;"></textarea>
                 </div>
                 </div><!-- end cart-delivery-section -->
             </div>
         </div>
 
         <div class="drawer-footer hidden" id="cart-drawer-footer">
-            <div class="cart-promo-alert hidden" id="cart-promo-badge">
-                <span class="material-symbols-outlined text-success">verified</span>
-                <span>Launch Member Applied: 10% OFF & Free Delivery!</span>
+            <!-- Founding Member Benefit Box -->
+            <div class="founding-benefit-box" id="founding-benefit-box">
+                <div class="founding-benefit-title">
+                    <span class="material-symbols-outlined text-success" style="font-size:1rem;">verified</span>
+                    <strong>Founding Member Benefit Applied 🎉</strong>
+                </div>
+                <div class="founding-benefit-grid">
+                    <div class="founding-benefit-row">
+                        <span>Platform:</span>
+                        <span>₹0</span>
+                    </div>
+                    <div class="founding-benefit-row">
+                        <span>Delivery:</span>
+                        <span>₹0</span>
+                    </div>
+                    <div class="founding-benefit-row">
+                        <span>Additional:</span>
+                        <span>₹0</span>
+                    </div>
+                </div>
             </div>
             
             <div class="price-summary">
@@ -1017,12 +1007,8 @@
                     <span id="cart-subtotal">₹0.00</span>
                 </div>
                 <div class="summary-line">
-                    <span>Community Shipping</span>
-                    <span id="cart-shipping">₹0.00</span>
-                </div>
-                <div class="summary-line discount-line hidden" id="cart-discount-wrapper">
-                    <span>10% Sponsoring Discount</span>
-                    <span id="cart-discount">-₹0.00</span>
+                    <span>Platform &amp; Delivery Fee</span>
+                    <span class="text-success font-bold" id="cart-shipping">FREE (₹0)</span>
                 </div>
                 <div class="summary-line total-line">
                     <span>Invoice Total</span>

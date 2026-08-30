@@ -579,38 +579,28 @@ const app = {
         });
     },
 
-    // Promo code spot logic (100 spots launch offer)
+    // Auto-fetch formatted delivery date (Today or Tomorrow)
+    getAutoDeliveryDate() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const targetDate = new Date(now);
+        // If ordering after 4:00 PM, schedule for Tomorrow morning/evening
+        if (currentHour >= 16) {
+            targetDate.setDate(now.getDate() + 1);
+        }
+        const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+        const formatted = targetDate.toLocaleDateString('en-IN', options);
+        const isToday = targetDate.toDateString() === now.toDateString();
+        return `${isToday ? 'Today' : 'Tomorrow'}, ${formatted}`;
+    },
+
+    // Founding member promotion and benefits notice
     updatePromoSpotsCount() {
-        const customerRegistrationsCount = this.state.users.filter(u => !u.isAdmin).length;
-        const spotsLeft = Math.max(0, 100 - customerRegistrationsCount);
-
-        const spotsEl = document.getElementById('promo-spots-left');
-        if (spotsEl) {
-            spotsEl.textContent = spotsLeft;
-        }
-
-        const ringFill = document.getElementById('promo-progress-ring');
-        if (ringFill) {
-            const r = 30;
-            const circumference = 2 * Math.PI * r;
-            const progress = spotsLeft / 100;
-            const offset = circumference * (1 - progress);
-            ringFill.style.strokeDasharray = circumference;
-            ringFill.style.strokeDashoffset = offset;
-        }
-
         const regPromoText = document.getElementById('register-promo-text');
         const regPromoBadge = document.getElementById('register-promo-badge');
         if (regPromoText && regPromoBadge) {
-            if (spotsLeft > 0) {
-                regPromoText.textContent = `Hurry! ${spotsLeft} launch promo spots are still available for 10% OFF & free delivery.`;
-                regPromoBadge.style.display = 'flex';
-            } else {
-                regPromoText.textContent = `Launch offer full! Regular memberships active.`;
-                regPromoBadge.style.backgroundColor = 'var(--border)';
-                regPromoBadge.style.borderColor = 'var(--text-muted)';
-                regPromoBadge.style.color = 'var(--text-muted)';
-            }
+            regPromoText.textContent = `Founding Member Benefit Applied: Platform Fee ₹0 • Delivery Fee ₹0 • Additional Charges ₹0`;
+            regPromoBadge.style.display = 'flex';
         }
     },
 
@@ -985,10 +975,6 @@ const app = {
             return;
         }
 
-        // Count customer accounts (excluding admins)
-        const customerRegistrationsCount = this.state.users.filter(u => !u.isAdmin).length;
-        const isPromoEligible = customerRegistrationsCount < 100;
-
         const newUser = {
             id: 'u-' + Math.random().toString(36).substring(2, 9),
             name,
@@ -997,7 +983,7 @@ const app = {
             address,
             password,
             isAdmin: false,
-            isPromoMember: isPromoEligible,
+            isPromoMember: true,
             joinedAt: new Date().toISOString()
         };
 
@@ -1006,9 +992,7 @@ const app = {
         localStorage.setItem('gudiyamart_sessionStart', Date.now());
         this.saveToStorage();
 
-        this.showToast(isPromoEligible
-            ? "Registration Success! You unlocked 10% OFF & Free Delivery launch promo."
-            : "Registration Successful! Welcome to Gudiya Mart.", "success");
+        this.showToast("Registration Successful! Enjoy 10% OFF & Free Delivery on your First Order (Min ₹499).", "success");
 
         // Write to Supabase asynchronously
         const dbUser = {
@@ -1254,11 +1238,6 @@ const app = {
             card.className = 'product-card';
 
             const isOutOfStock = prod.stock <= 0;
-            const promoActive = this.state.currentUser && this.state.currentUser.isPromoMember;
-
-            // Calculate promotional price display
-            const finalPrice = promoActive ? Math.round(prod.price * 0.9) : prod.price;
-            const originalPriceMarkup = promoActive ? `<span style="text-decoration: line-through; font-size: 0.82rem; color: var(--text-muted); font-weight: 500; margin-left: 6px;">₹${prod.price}</span>` : '';
 
             // Check if product is in cart to display in-card stepper
             const cartItem = this.state.cart.find(item => item.productId === prod.id);
@@ -1304,13 +1283,12 @@ const app = {
                     <span class="product-cat">${prod.category}</span>
                     <h3 class="product-title">${prod.name}</h3>
                     <div class="product-price-row">
-                        <span class="product-price">₹${finalPrice}</span>
+                        <span class="product-price">₹${prod.price}</span>
                         <span class="product-unit">/ ${prod.unit}</span>
-                        ${originalPriceMarkup}
                     </div>
                     
                     <span class="product-stock-lbl ${isOutOfStock ? 'out-of-stock' : 'in-stock'}">
-                        ${isOutOfStock ? 'Out of Stock' : `Stock: ${prod.stock} ${prod.unit}`}
+                        ${isOutOfStock ? 'Out of Stock' : '● In Stock'}
                     </span>
                     
                     ${actionButtonMarkup}
@@ -1342,7 +1320,7 @@ const app = {
 
         if (cartItem) {
             if (cartItem.quantity >= prod.stock) {
-                this.showToast(`Cannot add more. Only ${prod.stock} units available in stock.`, "warning");
+                this.showToast("Maximum available quantity reached.", "warning");
                 return;
             }
             cartItem.quantity = parseFloat((cartItem.quantity + selectedQty).toFixed(2));
@@ -1381,7 +1359,7 @@ const app = {
                 if (newQty <= prod.stock) {
                     cartItem.quantity = newQty;
                 } else {
-                    this.showToast(`Cannot add more. Limit of ${prod.stock} kg available.`, "warning");
+                    this.showToast("Maximum available quantity reached.", "warning");
                     return;
                 }
             } else if (nextIdx < 0) {
@@ -1395,7 +1373,7 @@ const app = {
             const qtyChange = delta * step;
 
             if (delta > 0 && cartItem.quantity >= prod.stock) {
-                this.showToast(`Cannot add more. Limit of ${prod.stock} units available.`, "warning");
+                this.showToast("Maximum available quantity reached.", "warning");
                 return;
             }
 
@@ -1424,6 +1402,18 @@ const app = {
 
         cartItem.quantity = parseFloat(newQty.toFixed(2));
         this.renderCart();
+    },
+
+    // Calculate cart pricing: Founding Member Benefit (All fees ₹0, no discounts on produce)
+    calculateCartPricing(subtotal) {
+        return {
+            subtotal,
+            discountAmount: 0,
+            platformFee: 0,
+            shippingFee: 0,
+            additionalCharges: 0,
+            finalTotal: subtotal
+        };
     },
 
     // Render Cart drawer side-panel items and totals
@@ -1464,6 +1454,12 @@ const app = {
         emptyView.classList.add('hidden');
         itemsView.classList.remove('hidden');
         footer.classList.remove('hidden');
+
+        // Auto-fetch delivery date and update in cart drawer
+        const autoDateEl = document.getElementById('cart-auto-delivery-date');
+        if (autoDateEl) {
+            autoDateEl.textContent = this.getAutoDeliveryDate();
+        }
 
         // Auth-gate: show lock prompt when not signed in, hide payment button and delivery form
         const authRequired = document.getElementById('cart-auth-required');
@@ -1538,46 +1534,28 @@ const app = {
             list.appendChild(row);
         });
 
+        // Pricing calculations via Founding Member Benefit (all 0 fees)
+        const pricing = this.calculateCartPricing(subtotal);
+
         // Sync Floating Quick Cart Banner
         if (floatBanner && floatQty && floatTotal) {
             floatBanner.classList.add('visible');
             floatQty.textContent = `${totalItemsCount} Item${totalItemsCount > 1 ? 's' : ''}`;
-            const promoActive = this.state.currentUser && this.state.currentUser.isPromoMember;
-            const discountAmount = promoActive ? Math.round(subtotal * 0.1) : 0;
-            const finalTotal = subtotal - discountAmount;
-            floatTotal.textContent = `₹${finalTotal}`;
+            floatTotal.textContent = `₹${pricing.finalTotal}`;
         }
-
-        // Address field setup (start empty so they type or select manually)
-        const addressTextarea = document.getElementById('cart-delivery-address');
-
-        // Calculations & Promotions (Rupee System: ₹30 flat shipping)
-        const promoActive = this.state.currentUser && this.state.currentUser.isPromoMember;
-        const discountAmount = promoActive ? Math.round(subtotal * 0.1) : 0;
-        const baseShippingFee = 30; // ₹30 Shipping
-        const shippingFee = promoActive ? 0 : baseShippingFee;
-        const finalTotal = subtotal - discountAmount + shippingFee;
 
         // Apply calculations to UI
-        document.getElementById('cart-subtotal').textContent = `₹${subtotal}`;
+        const subtotalEl = document.getElementById('cart-subtotal');
+        if (subtotalEl) subtotalEl.textContent = `₹${subtotal}`;
 
         const shippingEl = document.getElementById('cart-shipping');
-        shippingEl.textContent = shippingFee === 0 ? 'FREE' : `₹${shippingFee}`;
-        if (shippingFee === 0) shippingEl.classList.add('text-success');
-        else shippingEl.classList.remove('text-success');
-
-        const discountWrapper = document.getElementById('cart-discount-wrapper');
-        const discountEl = document.getElementById('cart-discount');
-        if (promoActive) {
-            discountWrapper.classList.remove('hidden');
-            discountEl.textContent = `-₹${discountAmount}`;
-            document.getElementById('cart-promo-badge').classList.remove('hidden');
-        } else {
-            discountWrapper.classList.add('hidden');
-            document.getElementById('cart-promo-badge').classList.add('hidden');
+        if (shippingEl) {
+            shippingEl.textContent = 'FREE (₹0)';
+            shippingEl.classList.add('text-success');
         }
 
-        document.getElementById('cart-total').textContent = `₹${finalTotal}`;
+        const totalEl = document.getElementById('cart-total');
+        if (totalEl) totalEl.textContent = `₹${pricing.finalTotal}`;
 
         // Trigger shop card steppers redraw
         this.renderShop(false);
@@ -1594,7 +1572,9 @@ const app = {
             return;
         }
 
-        const deliverySlot = document.querySelector('input[name="delivery-time"]:checked').value;
+        const selectedSlot = document.querySelector('input[name="delivery-time"]:checked')?.value || '9:00 AM - 10:00 AM (Morning)';
+        const deliveryDateStr = this.getAutoDeliveryDate();
+        const deliverySlot = `${deliveryDateStr} • ${selectedSlot}`;
         const deliveryAddress = document.getElementById('cart-delivery-address').value.trim();
 
         if (!deliveryAddress) {
@@ -1639,11 +1619,8 @@ const app = {
             });
         });
 
-        // Calculations in Rupees (₹30 flat shipping)
-        const promoActive = this.state.currentUser.isPromoMember;
-        const discountAmount = promoActive ? Math.round(subtotal * 0.1) : 0;
-        const shippingFee = promoActive ? 0 : 30;
-        const finalTotal = subtotal - discountAmount + shippingFee;
+        // Calculations: Produce subtotal with Founding Member benefits (₹0 charges)
+        const pricing = this.calculateCartPricing(subtotal);
 
         // Build Order
         const newOrder = {
@@ -1654,10 +1631,10 @@ const app = {
             items: purchasedItems,
             deliverySlot,
             deliveryAddress,
-            subtotal,
-            discount: discountAmount,
-            shipping: shippingFee,
-            total: finalTotal,
+            subtotal: pricing.subtotal,
+            discount: 0,
+            shipping: 0,
+            total: pricing.finalTotal,
             status: 'Pending',
             paymentStatus: 'Unpaid',
             paymentMethod: 'Cashfree Web',
