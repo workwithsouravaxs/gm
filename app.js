@@ -113,141 +113,8 @@ const app = {
         selectedWeights: {}
     },
 
-    // Default Catalog Seeds (Indian organic vegetable catalog in Rupees)
-    defaultProducts: [
-        {
-            id: 'v1',
-            name: 'Desi Tomatoes (Tamatar)',
-            category: 'daily',
-            unit: 'kg',
-            price: 40,
-            stock: 120,
-            sales: 85,
-            step: 0.5,
-            image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v2',
-            name: 'Pahadi Potatoes (Aloo)',
-            category: 'root',
-            unit: 'kg',
-            price: 30,
-            stock: 250,
-            sales: 154,
-            step: 0.5,
-            image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v3',
-            name: 'Nasik Red Onions (Pyaz)',
-            category: 'daily',
-            unit: 'kg',
-            price: 28,
-            stock: 200,
-            sales: 130,
-            step: 0.5,
-            image: 'https://images.unsplash.com/photo-1508747702-f520acf9b3fb?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v4',
-            name: 'Sweet Crunchy Carrots (Gajar)',
-            category: 'root',
-            unit: 'kg',
-            price: 45,
-            stock: 90,
-            sales: 42,
-            step: 0.5,
-            image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v5',
-            name: 'Organic Spinach (Palak)',
-            category: 'leafy',
-            unit: 'bunch',
-            price: 20,
-            stock: 65,
-            sales: 52,
-            step: 1,
-            image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v6',
-            name: 'Organic Broccoli Crowns',
-            category: 'exotic',
-            unit: 'kg',
-            price: 120,
-            stock: 45,
-            sales: 29,
-            step: 0.5,
-            image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v7',
-            name: 'Fresh Lady Finger (Bhindi)',
-            category: 'daily',
-            unit: 'kg',
-            price: 50,
-            stock: 80,
-            sales: 60,
-            step: 0.5,
-            image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v8',
-            name: 'Shimla Green Capsicum',
-            category: 'daily',
-            unit: 'kg',
-            price: 70,
-            stock: 75,
-            sales: 38,
-            step: 0.5,
-            image: 'https://images.unsplash.com/photo-1563565080-7acb2cf55047?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v9',
-            name: 'Fresh Green Cabbage (Patta Gobhi)',
-            category: 'leafy',
-            unit: 'pc',
-            price: 35,
-            stock: 110,
-            sales: 47,
-            step: 1,
-            image: 'https://images.unsplash.com/photo-1550147760-44c9966d6bc7?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v10',
-            name: 'Mountain Ginger (Adrak)',
-            category: 'root',
-            unit: 'kg',
-            price: 160,
-            stock: 50,
-            sales: 33,
-            step: 0.5,
-            image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v11',
-            name: 'Mountain Garlic (Lahsun)',
-            category: 'root',
-            unit: 'kg',
-            price: 220,
-            stock: 60,
-            sales: 25,
-            step: 0.5,
-            image: 'https://images.unsplash.com/photo-1589618474799-a9a700373a15?w=600&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 'v12',
-            name: 'Fresh Coriander (Dhaniya)',
-            category: 'leafy',
-            unit: 'bunch',
-            price: 10,
-            stock: 150,
-            sales: 112,
-            step: 1,
-            image: 'https://images.unsplash.com/photo-1608797178974-15b35a61d121?w=600&auto=format&fit=crop&q=60'
-        }
-    ],
+    // Default Catalog Seeds (empty by default to load solely from Supabase DB)
+    defaultProducts: [],
 
     // HTML Escaping Utility for XSS Prevention
     escapeHTML(str) {
@@ -293,11 +160,15 @@ const app = {
             this.state.currentUser = JSON.parse(storedCurrentUser);
         }
 
-        // Setup products
+        // Setup products (strictly real DB products)
         if (storedProducts) {
-            this.state.products = JSON.parse(storedProducts);
+            try {
+                this.state.products = JSON.parse(storedProducts);
+            } catch (e) {
+                this.state.products = [];
+            }
         } else {
-            this.state.products = [...this.defaultProducts];
+            this.state.products = [];
         }
 
         // Setup orders
