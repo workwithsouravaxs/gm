@@ -1367,9 +1367,9 @@ const app = {
         grid.innerHTML = '';
 
         // Apply filters
-        const activeCategory = document.querySelector('#category-filter-list .category-chip.active').getAttribute('data-category');
-        const searchQuery = document.getElementById('shop-search').value.trim().toLowerCase();
-        const sortBy = document.getElementById('sort-selector').value;
+        const activeCategory = document.querySelector('#category-filter-list .category-chip.active')?.getAttribute('data-category') || 'all';
+        const searchQuery = (document.getElementById('shop-search')?.value || document.getElementById('shop-search-main')?.value || '').trim().toLowerCase();
+        const sortBy = document.getElementById('sort-selector')?.value || 'default';
 
         let filtered = this.state.products.filter(prod => {
             const matchesCat = activeCategory === 'all' || prod.category === activeCategory;
