@@ -456,8 +456,13 @@
                 <!-- Product Catalog -->
                 <div class="catalog-container">
                     <div class="catalog-header">
-                        <div class="catalog-results-info">
-                            Showing <span id="result-count">0</span> organic varieties
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <div class="catalog-results-info">
+                                Showing <span id="result-count">0</span> organic varieties
+                            </div>
+                            <div class="live-rate-status-badge" id="live-rate-status-badge" onclick="app.syncProductsFromSupabase(true)" title="Click to refresh live rates directly from DB">
+                                <span class="live-pulse-dot"></span> Live Farm Rates (DB Synced)
+                            </div>
                         </div>
                         <button class="btn btn-secondary filter-toggle-btn" id="open-filters-btn">
                             <span class="material-symbols-outlined">filter_alt</span> Refine List
@@ -800,63 +805,160 @@
 
                     <!-- SUBTAB 2: VEGETABLE CATALOG INVENTORY -->
                     <div class="admin-tab-content" id="admin-inventory-tab">
-                        <div class="inventory-layout">
-                            <!-- Add/Edit Product Form -->
-                            <div class="admin-card">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 8px;">
-                                    <h3 id="product-form-title" style="margin-bottom:0;">Register Farm Supply</h3>
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="app.forceSyncInventoryToSupabase()" style="padding: 6px 12px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; border-color: var(--primary); color: var(--primary);">
-                                        <span class="material-symbols-outlined" style="font-size: 1rem;">cloud_upload</span> Sync Inventory to DB
-                                    </button>
+                        <!-- Stacked Sections Layout (Up and Down) -->
+                        <div class="inventory-stacked-layout" style="display: flex; flex-direction: column; gap: 24px;">
+                            
+                            <!-- SECTION 1: REGISTER / EDIT FARM SUPPLY -->
+                            <div class="admin-card admin-section-card">
+                                <div class="admin-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+                                    <div>
+                                        <h3 id="product-form-title" style="margin: 0; border: none; padding: 0; display: flex; align-items: center; gap: 8px;">
+                                            <span class="material-symbols-outlined" style="color: var(--primary);">add_circle</span>
+                                            Section 1: Register Farm Supply
+                                        </h3>
+                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0;">Add new farm produce or update prices, units, and harvest stock levels</p>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="app.forceSyncInventoryToSupabase()" style="padding: 6px 12px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; border-color: var(--primary); color: var(--primary);">
+                                            <span class="material-symbols-outlined" style="font-size: 1rem;">cloud_upload</span> Sync DB
+                                        </button>
+                                    </div>
                                 </div>
-                                <form id="product-manage-form">
+
+                                <form id="product-manage-form" class="product-form-grid-layout">
                                     <input type="hidden" id="edit-prod-id">
                                     
-                                    <div class="form-group">
-                                        <label for="prod-name">Produce Name</label>
-                                        <input type="text" id="prod-name" required placeholder="e.g. Heirloom Cherry Tomatoes">
-                                    </div>
-                                    <div class="form-row">
+                                    <div class="form-grid-3col">
+                                        <!-- Produce Name -->
                                         <div class="form-group">
-                                            <label for="prod-category">Category</label>
+                                            <label for="prod-name">Produce Name <span style="color:red;">*</span></label>
+                                            <input type="text" id="prod-name" required placeholder="e.g. Desi Tomatoes (Tamatar)">
+                                        </div>
+
+                                        <!-- Category -->
+                                        <div class="form-group">
+                                            <label for="prod-category">Category <span style="color:red;">*</span></label>
                                             <select id="prod-category" class="form-select">
-                                                <option value="leafy">Leafy Greens</option>
-                                                <option value="root">Roots & Tubers</option>
-                                                <option value="daily">Daily Essentials</option>
-                                                <option value="exotic">Exotic Harvest</option>
+                                                <option value="daily">🥕 Daily Essentials</option>
+                                                <option value="leafy">🥬 Leafy Greens</option>
+                                                <option value="root">🥔 Roots & Tubers</option>
+                                                <option value="exotic">🥦 Exotic Harvest</option>
                                             </select>
                                         </div>
+
+                                        <!-- Image URL -->
                                         <div class="form-group">
-                                            <label for="prod-unit">Selling Unit</label>
-                                            <input type="text" id="prod-unit" required placeholder="e.g. 1 kg, 500g, bunch">
+                                            <label for="prod-image">Image URL <span style="color:red;">*</span></label>
+                                            <input type="url" id="prod-image" required placeholder="https://images.unsplash.com/photo-...">
                                         </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="prod-price">Farmer Sourcing Price (₹)</label>
-                                            <input type="number" id="prod-price" required step="1" min="1" placeholder="40">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="prod-stock">Quantity Sourced</label>
-                                            <input type="number" id="prod-stock" required min="0" placeholder="50">
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="prod-image">Image URL</label>
-                                        <input type="url" id="prod-image" required placeholder="https://images.unsplash.com/photo-...">
                                     </div>
 
-                                    <div class="form-actions-inline">
-                                        <button type="submit" class="btn btn-primary" id="save-product-btn">Record Harvest</button>
-                                        <button type="button" class="btn btn-secondary hidden" id="cancel-edit-btn">Cancel</button>
+                                    <div class="form-grid-3col" style="margin-top: 12px;">
+                                        <!-- Price -->
+                                        <div class="form-group">
+                                            <label for="prod-price">Sourcing Price (₹) <span style="color:red;">*</span></label>
+                                            <div class="input-with-prefix" style="position: relative;">
+                                                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--primary);">₹</span>
+                                                <input type="number" id="prod-price" required step="1" min="1" placeholder="40" style="padding-left: 28px;">
+                                            </div>
+                                        </div>
+
+                                        <!-- Selling Unit with Quick Buttons -->
+                                        <div class="form-group">
+                                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                                                <label for="prod-unit" style="margin-bottom: 0;">Selling Unit <span style="color:red;">*</span></label>
+                                                <span style="font-size: 0.72rem; color: var(--text-muted);">Click to auto-fill:</span>
+                                            </div>
+                                            <div class="input-with-quick-pills">
+                                                <input type="text" id="prod-unit" required placeholder="e.g. 1 kg, 500g, bunch">
+                                                <div class="quick-choice-pills" id="unit-quick-pills">
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickUnit('1 kg')">Kg</button>
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickUnit('500g')">Gm (500g)</button>
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickUnit('250g')">250g</button>
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickUnit('1 piece')">Piece</button>
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickUnit('1 bunch')">Bunch</button>
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickUnit('1 dozen')">Dozen</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Quantity Sourced with Quick Buttons -->
+                                        <div class="form-group">
+                                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                                                <label for="prod-stock" style="margin-bottom: 0;">Quantity Sourced <span style="color:red;">*</span></label>
+                                                <span style="font-size: 0.72rem; color: var(--text-muted);">Batch preset:</span>
+                                            </div>
+                                            <div class="input-with-quick-pills">
+                                                <input type="number" id="prod-stock" required min="0" placeholder="50">
+                                                <div class="quick-choice-pills" id="stock-quick-pills">
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickStock(10)">10</button>
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickStock(25)">25</button>
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickStock(50)">50</button>
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickStock(100)">100</button>
+                                                    <button type="button" class="quick-pill" onclick="app.setQuickStock(250)">250</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-actions-inline" style="margin-top: 16px; display: flex; gap: 12px;">
+                                        <button type="submit" class="btn btn-primary" id="save-product-btn" style="min-width: 180px;">
+                                            <span class="material-symbols-outlined">save</span> Record Harvest
+                                        </button>
+                                        <button type="button" class="btn btn-secondary hidden" id="cancel-edit-btn" onclick="app.clearProductForm()">
+                                            Cancel
+                                        </button>
                                     </div>
                                 </form>
                             </div>
 
-                            <!-- Inventory List Table -->
-                            <div class="admin-card flex-grow">
-                                <h3>Active Harvest Sourcing</h3>
-                                <div class="admin-table-container">
+                            <!-- SECTION 2: ACTIVE HARVEST INVENTORY GRID -->
+                            <div class="admin-card admin-section-card" id="admin-active-inventory-section">
+                                <div class="admin-inv-toolbar">
+                                    <div>
+                                        <h3 style="margin-bottom: 4px; border-bottom: none; padding-bottom: 0; display: flex; align-items: center; gap: 8px;">
+                                            <span class="material-symbols-outlined" style="color: var(--primary);">grid_view</span>
+                                            Section 2: Active Harvest Inventory & Stock
+                                        </h3>
+                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;" id="admin-inv-count-text">Catalog & Real-time Stock Levels</p>
+                                    </div>
+                                    <div class="admin-inv-toolbar-actions">
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="app.openRateCardModal()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; box-shadow: 0 2px 8px rgba(46, 125, 50, 0.25);">
+                                            <span class="material-symbols-outlined" style="font-size: 1.1rem;">receipt_long</span> Download Daily Rate Card
+                                        </button>
+                                        <div class="view-toggle-btns" style="display: flex; gap: 4px; background: var(--bg-card-hover); padding: 3px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                                            <button type="button" class="btn-icon-toggle active" id="btn-inv-view-grid" onclick="app.setInventoryViewMode('grid')" title="Grid View">
+                                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">grid_view</span>
+                                            </button>
+                                            <button type="button" class="btn-icon-toggle" id="btn-inv-view-table" onclick="app.setInventoryViewMode('table')" title="List / Table View">
+                                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">view_list</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Inventory Filter & Search Bar -->
+                                <div class="admin-inv-filters">
+                                    <div class="inv-search-wrap">
+                                        <span class="material-symbols-outlined">search</span>
+                                        <input type="text" id="admin-inv-search" placeholder="Search vegetable name, category, or price..." oninput="app.handleInventorySearch(this.value)">
+                                    </div>
+                                    <div class="inv-cat-pills" id="admin-inv-cat-pills">
+                                        <button type="button" class="inv-cat-pill active" onclick="app.filterInventoryCategory('all')">All</button>
+                                        <button type="button" class="inv-cat-pill" onclick="app.filterInventoryCategory('daily')">Daily Essentials</button>
+                                        <button type="button" class="inv-cat-pill" onclick="app.filterInventoryCategory('leafy')">Leafy Greens</button>
+                                        <button type="button" class="inv-cat-pill" onclick="app.filterInventoryCategory('root')">Roots & Tubers</button>
+                                        <button type="button" class="inv-cat-pill" onclick="app.filterInventoryCategory('exotic')">Exotic Harvest</button>
+                                    </div>
+                                </div>
+
+                                <!-- Inventory Cards Grid (Default View) -->
+                                <div class="admin-inventory-grid" id="admin-inventory-grid">
+                                    <!-- Injected dynamically by app.renderAdminInventory() -->
+                                </div>
+
+                                <!-- Inventory List Table (Fallback View) -->
+                                <div class="admin-table-container hidden" id="admin-inventory-table-container" style="margin-top: 16px;">
                                     <table class="admin-table" id="admin-inventory-table">
                                         <thead>
                                             <tr>
@@ -1181,6 +1283,69 @@
             </div>
             <div class="modal-body" id="order-modal-body">
                 <!-- Populated dynamically by app.showAdminOrderDetails() -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Daily Rate Card & Price Sheet Modal -->
+    <div class="modal-overlay hidden" id="admin-ratecard-modal-overlay" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-box ratecard-modal">
+            <div class="modal-header">
+                <div>
+                    <h3 id="ratecard-modal-title" style="display: flex; align-items: center; gap: 8px;">
+                        <span class="material-symbols-outlined" style="color: var(--primary);">receipt_long</span>
+                        Daily Customer Rate Card & Price Sheet
+                    </h3>
+                    <p style="font-size:0.82rem;color:var(--text-muted);margin:2px 0 0;">Download image flyer or share formatted rate list daily with customers in WhatsApp groups</p>
+                </div>
+                <button class="modal-close-btn" onclick="document.getElementById('admin-ratecard-modal-overlay').classList.add('hidden')" aria-label="Close modal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 16px 20px;">
+                <!-- Rate Card Controls -->
+                <div class="ratecard-controls-bar">
+                    <div class="ratecard-control-item">
+                        <label for="ratecard-custom-date">Date:</label>
+                        <input type="date" id="ratecard-custom-date" onchange="app.refreshRateCardPreview()">
+                    </div>
+                    <div class="ratecard-control-item flex-grow">
+                        <label for="ratecard-header-note">Promo / Group Note:</label>
+                        <input type="text" id="ratecard-header-note" placeholder="🌾 100% Farm-Fresh Morning Harvest | Book before 10 PM" oninput="app.refreshRateCardPreview()">
+                    </div>
+                    <div class="ratecard-control-item">
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.82rem; margin-top: 18px;">
+                            <input type="checkbox" id="ratecard-hide-oos" checked onchange="app.refreshRateCardPreview()">
+                            <span>In-stock only</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Live Visual Preview Container -->
+                <div class="ratecard-preview-wrapper">
+                    <div class="ratecard-preview-sheet" id="ratecard-preview-sheet">
+                        <!-- Populated dynamically by app.refreshRateCardPreview() -->
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="ratecard-actions-bar">
+                    <button type="button" class="btn btn-primary" onclick="app.downloadRateCardImage()" id="btn-download-ratecard-png">
+                        <span class="material-symbols-outlined">download</span> Download Image (PNG)
+                    </button>
+                    <button type="button" class="btn btn-whatsapp" onclick="app.shareRateCardWhatsApp()">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="#FFFFFF" style="vertical-align: middle;">
+                            <path d="M12.031 2C6.479 2 2 6.479 2 12.031c0 1.936.549 3.738 1.498 5.278l-1.077 3.931 4.07-1.066c1.472.898 3.195 1.42 5.04 1.42 5.552 0 10.03-4.479 10.03-10.031S17.583 2 12.031 2zm0 17.186c-1.63 0-3.149-.45-4.478-1.229l-.32-.187-2.42.635.646-2.359-.206-.328c-.85-1.353-1.301-2.91-1.301-4.524 0-4.478 3.644-8.122 8.122-8.122 4.479 0 8.122 3.644 8.122 8.122 0 4.479-3.643 8.122-8.122 8.122zM15.938 13.06c-.216-.108-1.277-.63-1.473-.7-.196-.07-.339-.108-.48.108-.14.216-.549.7-.674.843-.125.143-.249.162-.465.054-.216-.108-.913-.336-1.739-1.073-.642-.572-1.076-1.278-1.201-1.494-.125-.216-.013-.333.094-.44.097-.097.216-.249.324-.374.108-.125.144-.216.216-.36.072-.143.036-.27-.018-.378-.054-.108-.48-1.156-.658-1.583-.173-.418-.363-.36-.48-.366h-.409c-.143 0-.374.054-.57.266-.196.216-.749.73-.749 1.782 0 1.053.766 2.072.873 2.214.108.143 1.507 2.296 3.649 3.22.509.22.906.35 1.217.449.512.162.977.139 1.345.084.41-.06 1.277-.522 1.458-1.026.18-.504.18-.936.126-1.026-.055-.09-.2-.143-.416-.251z"/>
+                        </svg>
+                        Share to WhatsApp
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="app.copyRateCardText()">
+                        <span class="material-symbols-outlined">content_copy</span> Copy Text
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="app.printRateCard()">
+                        <span class="material-symbols-outlined">print</span> Print
+                    </button>
+                </div>
             </div>
         </div>
     </div>

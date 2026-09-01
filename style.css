@@ -4549,3 +4549,746 @@ textarea:focus-visible {
         justify-content: center !important;
     }
 }
+
+/* ==========================================================================
+   ADMIN INVENTORY GRID & TOOLBAR ENHANCEMENTS
+   ========================================================================== */
+
+.admin-inv-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.admin-inv-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-icon-toggle {
+    background: transparent;
+    border: none;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-icon-toggle:hover {
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.btn-icon-toggle.active {
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-inv-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.inv-search-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.inv-search-wrap span {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.inv-search-wrap input {
+    width: 100%;
+    padding: 8px 12px 8px 38px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inv-search-wrap input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+}
+
+.inv-cat-pills {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+}
+
+.inv-cat-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.inv-cat-pill:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--bg-card-hover);
+}
+
+.inv-cat-pill.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(46, 125, 50, 0.25);
+}
+
+/* Inventory Grid Container */
+.admin-inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 16px;
+}
+
+.admin-prod-grid-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
+}
+
+.admin-prod-grid-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(46, 125, 50, 0.35);
+}
+
+.admin-prod-grid-img-wrap {
+    position: relative;
+    width: 100%;
+    height: 140px;
+    background: #f0ede6;
+    overflow: hidden;
+}
+
+.admin-prod-grid-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.admin-prod-grid-card:hover .admin-prod-grid-img-wrap img {
+    transform: scale(1.05);
+}
+
+.admin-card-badges {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+}
+
+.admin-badge-cat {
+    background: rgba(26, 26, 26, 0.85);
+    color: #ffffff;
+    backdrop-filter: blur(4px);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+}
+
+.admin-badge-stock {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(4px);
+}
+
+.admin-badge-stock.in-stock {
+    background: rgba(46, 125, 50, 0.9);
+    color: #ffffff;
+}
+
+.admin-badge-stock.low-stock {
+    background: rgba(224, 86, 36, 0.9);
+    color: #ffffff;
+}
+
+.admin-badge-stock.out-of-stock {
+    background: rgba(185, 28, 28, 0.9);
+    color: #ffffff;
+}
+
+.admin-prod-grid-body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 8px;
+}
+
+.admin-prod-grid-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+    margin: 0;
+}
+
+.admin-prod-grid-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.admin-prod-grid-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 2px;
+}
+
+.admin-prod-grid-price {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.admin-prod-grid-unit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Quick Stock Stepper in Grid Card */
+.admin-stock-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card-hover);
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    margin-top: 4px;
+}
+
+.admin-stock-control-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.stock-stepper-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stock-step-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.stock-step-btn:hover {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+.stock-val-display {
+    font-size: 0.85rem;
+    font-weight: 800;
+    min-width: 28px;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.admin-prod-grid-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+.admin-prod-grid-actions button {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   DAILY RATE CARD & PRICE SHEET MODAL
+   ========================================================================== */
+
+.modal-box.ratecard-modal {
+    max-width: 780px !important;
+    width: 95% !important;
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    border-radius: 16px !important;
+    background: var(--bg-card, #ffffff) !important;
+}
+
+.ratecard-controls-bar {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    background: var(--bg-card-hover, #f8f6f0);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+}
+
+.ratecard-control-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ratecard-control-item.flex-grow {
+    flex: 1;
+    min-width: 200px;
+}
+
+.ratecard-control-item label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.ratecard-control-item input[type="date"],
+.ratecard-control-item input[type="text"] {
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.82rem;
+}
+
+.ratecard-control-item input[type="text"]:focus,
+.ratecard-control-item input[type="date"]:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.ratecard-preview-wrapper {
+    max-height: 52vh;
+    overflow-y: auto;
+    padding: 8px 4px;
+    margin-bottom: 12px;
+    scrollbar-width: thin;
+}
+
+/* Rate Card Sheet Flyer Style */
+.ratecard-preview-sheet {
+    background: #ffffff;
+    color: #1a1a1a;
+    border: 2px solid #2e7d32;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.ratecard-header-banner {
+    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+    color: #ffffff;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.ratecard-brand-title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ratecard-brand-tagline {
+    font-size: 0.78rem;
+    color: #c8e6c9;
+    margin: 2px 0 0;
+    font-weight: 500;
+}
+
+.ratecard-date-badge {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 6px 14px;
+    border-radius: 20px;
+    text-align: right;
+}
+
+.ratecard-date-text {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+}
+
+.ratecard-date-sub {
+    font-size: 0.68rem;
+    color: #e8f5e9;
+    margin: 0;
+}
+
+.ratecard-promo-banner {
+    background: #fff8e1;
+    color: #8d6e63;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px dashed #ffe082;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Rate Card Table Matrix */
+.ratecard-table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    padding: 16px;
+    background: #ffffff;
+}
+
+.ratecard-cat-section {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.ratecard-cat-header {
+    background: #f1f8e9;
+    color: #2e7d32;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #c8e6c9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ratecard-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.ratecard-items-table tr {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.ratecard-items-table tr:nth-child(even) {
+    background: #fafafa;
+}
+
+.ratecard-items-table td {
+    padding: 8px 10px;
+    vertical-align: middle;
+}
+
+.ratecard-item-name {
+    font-weight: 700;
+    color: #222222;
+}
+
+.ratecard-item-name-hi {
+    font-size: 0.72rem;
+    color: #666666;
+}
+
+.ratecard-item-unit {
+    font-size: 0.75rem;
+    color: #555555;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.ratecard-item-price {
+    font-weight: 800;
+    color: #1b5e20;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.ratecard-footer-banner {
+    background: #f5f5f5;
+    border-top: 2px solid #2e7d32;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: #444444;
+}
+
+.ratecard-footer-order-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: #1b5e20;
+}
+
+.ratecard-actions-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 0 4px;
+    border-top: 1px solid var(--border);
+    justify-content: flex-end;
+}
+
+.btn-whatsapp {
+    background-color: #25D366 !important;
+    color: #ffffff !important;
+    border: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-whatsapp:hover {
+    background-color: #1ebc59 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4) !important;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #ratecard-preview-sheet, #ratecard-preview-sheet * {
+        visibility: visible;
+    }
+    #ratecard-preview-sheet {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        border: none;
+        box-shadow: none;
+    }
+}
+
+/* Section cards and 3-column form layout */
+.admin-section-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease;
+}
+
+.form-grid-3col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* Quick Choice Pill Buttons beside/under inputs */
+.input-with-quick-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.quick-choice-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.quick-pill {
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.quick-pill:hover {
+    background: rgba(46, 125, 50, 0.1);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.quick-pill.active {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 1px 4px rgba(46, 125, 50, 0.3);
+}
+
+/* Rate Card Table Row with Vegetable Thumbnail */
+.ratecard-prod-row-flex {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ratecard-prod-thumb {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    object-fit: cover;
+    background-color: #f0ede6;
+    border: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+@media (max-width: 992px) {
+    .form-grid-3col {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .form-grid-3col {
+        grid-template-columns: 1fr;
+    }
+    .admin-section-card {
+        padding: 16px;
+    }
+}
+
+/* Live Price Status Badge */
+.live-rate-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(46, 125, 50, 0.08);
+    border: 1px solid rgba(46, 125, 50, 0.25);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.live-rate-status-badge:hover {
+    background: rgba(46, 125, 50, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(46, 125, 50, 0.15);
+}
+
+.live-pulse-dot {
+    width: 7px;
+    height: 7px;
+    background-color: #2e7d32;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+    animation: live-pulse 2s infinite;
+}
+
+@keyframes live-pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(46, 125, 50, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+    }
+}
+
+
+

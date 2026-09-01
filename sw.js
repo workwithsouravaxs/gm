@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gudiyamart-v6';
+const CACHE_NAME = 'gudiyamart-v7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -45,6 +45,11 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests or browser extension requests
   if (event.request.method !== 'GET' || !requestUrl.protocol.startsWith('http')) {
+    return;
+  }
+
+  // ALWAYS bypass cache for database APIs and backend serverless functions
+  if (requestUrl.hostname.includes('supabase.co') || requestUrl.pathname.includes('/api/') || requestUrl.hostname.includes('cashfree.com')) {
     return;
   }
 

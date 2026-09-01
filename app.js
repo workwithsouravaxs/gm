@@ -25,13 +25,18 @@ const app = {
                     'apikey': this.key,
                     'Authorization': `Bearer ${this.key}`,
                     'Content-Type': 'application/json',
-                    'Prefer': 'return=representation'
+                    'Prefer': 'return=representation',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache'
                 };
-                const config = { method, headers };
+                const config = { method, headers, cache: 'no-store' };
                 if (body) {
                     config.body = JSON.stringify(body);
                 }
-                const response = await fetch(`${this.url}/${endpoint}`, config);
+                // Append cache-busting timestamp for GET requests to guarantee latest prices
+                const separator = endpoint.includes('?') ? '&' : '?';
+                const urlWithBuster = method === 'GET' ? `${this.url}/${endpoint}${separator}_ts=${Date.now()}` : `${this.url}/${endpoint}`;
+                const response = await fetch(urlWithBuster, config);
                 if (!response.ok) {
                     const errorMsg = await response.text();
                     throw new Error(`REST Error: ${response.status} - ${errorMsg}`);
@@ -100,6 +105,9 @@ const app = {
         adminLanguage: 'en',
         activeView: 'shop-view',
         activeAdminSubtab: 'admin-orders-tab',
+        inventoryViewMode: 'grid',
+        inventorySearchQuery: '',
+        inventoryCategoryFilter: 'all',
         currentSlide: 0,
         carouselInterval: null,
         selectedWeights: {}
@@ -335,6 +343,15 @@ const app = {
         // Start pre-launch hero countdown timer
         this.startHeroCountdown();
 
+        // Real-time live price sync: auto-polling every 20 seconds, on tab focus, and visibility change
+        this.state.priceSyncInterval = setInterval(() => this.syncProductsFromSupabase(false), 20000);
+        window.addEventListener('focus', () => this.syncProductsFromSupabase(false));
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                this.syncProductsFromSupabase(false);
+            }
+        });
+
         // Register Service Worker for PWA performance and offline caching
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -385,41 +402,77 @@ const app = {
         this.state.countdownInterval = setInterval(updateCountdown, 1000);
     },
 
-    async syncFromSupabase() {
-        // Query products
-        const dbProducts = await this.supabase.request('gudiyamart_products', 'GET');
-        if (dbProducts && Array.isArray(dbProducts) && dbProducts.length > 0) {
-            console.log(`Synced ${dbProducts.length} products from Supabase.`);
-            this.state.products = dbProducts.map(p => ({
+    // Guaranteed Fresh Price Sync directly from Supabase DB
+    async syncProductsFromSupabase(forceNotify = false) {
+        try {
+            const dbProducts = await this.supabase.request('gudiyamart_products', 'GET');
+            if (!dbProducts || !Array.isArray(dbProducts) || dbProducts.length === 0) {
+                return this.state.products;
+            }
+
+            let priceChangedCount = 0;
+            const updatedProducts = dbProducts.map(p => ({
                 id: p.id,
                 name: p.name,
                 category: p.category,
                 unit: p.unit,
                 price: Number(p.price),
                 stock: Number(p.stock),
-                sales: Number(p.sales),
+                sales: Number(p.sales || 0),
                 step: Number(p.step || 1),
                 image: p.image
             }));
-            this.saveToStorage();
-            this.renderShop();
-        } else if (dbProducts && Array.isArray(dbProducts) && dbProducts.length === 0) {
-            console.log("Supabase gudiyamart_products table is empty. Seeding defaults...");
-            for (const prod of this.state.products) {
-                const dbProd = {
-                    id: prod.id,
-                    name: prod.name,
-                    category: prod.category,
-                    unit: prod.unit,
-                    price: prod.price,
-                    stock: prod.stock,
-                    sales: prod.sales,
-                    step: prod.step || 1,
-                    image: prod.image
-                };
-                await this.supabase.request('gudiyamart_products', 'POST', dbProd);
+
+            // Check for price updates compared to current local state
+            updatedProducts.forEach(newP => {
+                const oldP = this.state.products.find(op => op.id === newP.id);
+                if (oldP && oldP.price !== newP.price) {
+                    priceChangedCount++;
+                }
+            });
+
+            // Check if cart contains any item whose price was updated in DB
+            let cartPriceChanged = false;
+            if (this.state.cart && this.state.cart.length > 0) {
+                this.state.cart.forEach(item => {
+                    const freshP = updatedProducts.find(p => p.id === item.productId);
+                    if (freshP) {
+                        const oldP = this.state.products.find(p => p.id === item.productId);
+                        if (oldP && oldP.price !== freshP.price) {
+                            cartPriceChanged = true;
+                            this.showToast(`📢 Live Rate Update: ${freshP.name} is now ₹${freshP.price} / ${freshP.unit}`, 'info');
+                        }
+                    }
+                });
             }
+
+            // Save fresh data
+            this.state.products = updatedProducts;
+            this.saveToStorage();
+
+            // Refresh UI without resetting user scroll or focus
+            this.renderShop(false);
+            if (cartPriceChanged) {
+                this.renderCart();
+            }
+            if (this.state.activeView === 'admin-view' && this.state.activeAdminSubtab === 'admin-inventory-tab') {
+                this.renderAdminInventory();
+            }
+
+            if (priceChangedCount > 0 && !cartPriceChanged && forceNotify) {
+                this.showToast(`Rates updated to today's live farm catalog (${priceChangedCount} item prices updated)`, 'info');
+            }
+
+            return updatedProducts;
+        } catch (err) {
+            console.error("[Live Price Sync Error]:", err);
+            return this.state.products;
         }
+    },
+
+    async syncFromSupabase() {
+        // Query products directly using fresh price sync
+        await this.syncProductsFromSupabase(false);
 
         // Query users
         const dbUsers = await this.supabase.request('gudiyamart_users', 'GET');
@@ -752,6 +805,8 @@ const app = {
             cartOverlay.classList.add('open');
             cartDrawer.classList.add('open');
             this.renderCart();
+            // Automatically fetch and verify latest prices from Supabase DB
+            this.syncProductsFromSupabase(false);
         };
 
         const closeCart = () => {
@@ -1562,7 +1617,7 @@ const app = {
     },
 
     // Order Placement Checkout Flow
-    placeOrder() {
+    async placeOrder() {
         if (!this.state.currentUser) {
             this.showToast("Please sign in or register to place your booking order.", "warning");
             this.navigateTo('auth-view');
@@ -1582,11 +1637,15 @@ const app = {
             return;
         }
 
-        // Verify stock is still sufficient
+        // Always lock in latest fresh prices & stock directly from Supabase DB before order calculation
+        await this.syncProductsFromSupabase(false);
+
+        // Verify stock is still sufficient with fresh DB data
         for (const item of this.state.cart) {
             const prod = this.state.products.find(p => p.id === item.productId);
-            if (prod.stock < item.quantity) {
-                this.showToast(`Sorry, stock for ${prod.name} has run low. Try reducing quantity.`, "error");
+            if (!prod || prod.stock < item.quantity) {
+                this.showToast(`Sorry, stock for ${prod ? prod.name : 'an item'} has run low. Try reducing quantity.`, "error");
+                this.renderCart();
                 return;
             }
         }
@@ -2432,54 +2491,743 @@ const app = {
     },
 
     // Admin Vegetable Product Catalog Management
-    renderAdminInventory() {
-        const tbody = document.getElementById('admin-inventory-table-body');
-        if (!tbody) return;
+    // Admin Vegetable Product Catalog Management (Grid & List View)
+    setInventoryViewMode(mode = 'grid') {
+        this.state.inventoryViewMode = mode;
+        const gridContainer = document.getElementById('admin-inventory-grid');
+        const tableContainer = document.getElementById('admin-inventory-table-container');
+        const btnGrid = document.getElementById('btn-inv-view-grid');
+        const btnTable = document.getElementById('btn-inv-view-table');
 
-        tbody.innerHTML = '';
+        if (mode === 'grid') {
+            if (gridContainer) gridContainer.classList.remove('hidden');
+            if (tableContainer) tableContainer.classList.add('hidden');
+            if (btnGrid) btnGrid.classList.add('active');
+            if (btnTable) btnTable.classList.remove('active');
+        } else {
+            if (gridContainer) gridContainer.classList.add('hidden');
+            if (tableContainer) tableContainer.classList.remove('hidden');
+            if (btnGrid) btnGrid.classList.remove('active');
+            if (btnTable) btnTable.classList.add('active');
+        }
+        this.renderAdminInventory();
+    },
+
+    handleInventorySearch(query) {
+        this.state.inventorySearchQuery = (query || '').toLowerCase().trim();
+        this.renderAdminInventory();
+    },
+
+    filterInventoryCategory(category) {
+        this.state.inventoryCategoryFilter = category || 'all';
+        const pills = document.querySelectorAll('#admin-inv-cat-pills .inv-cat-pill');
+        pills.forEach(pill => {
+            if (pill.getAttribute('onclick')?.includes(`'${category}'`)) {
+                pill.classList.add('active');
+            } else {
+                pill.classList.remove('active');
+            }
+        });
+        this.renderAdminInventory();
+    },
+
+    quickAdjustStock(productId, delta) {
+        const prod = this.state.products.find(p => p.id === productId);
+        if (!prod) return;
+
+        const oldStock = prod.stock || 0;
+        const newStock = Math.max(0, Math.round((oldStock + delta) * 10) / 10);
+        if (oldStock === newStock) return;
+
+        prod.stock = newStock;
+        this.saveToStorage();
+
+        // Update Supabase in background
+        this.supabase.request(`gudiyamart_products?id=eq.${encodeURIComponent(productId)}`, 'PATCH', { stock: newStock });
+
+        this.showToast(`${this.getVegName(prod.name)}: Stock updated to ${newStock}`, 'info');
+        this.renderAdminInventory();
+        this.renderShop();
+    },
+
+    renderAdminInventory() {
+        const grid = document.getElementById('admin-inventory-grid');
+        const tbody = document.getElementById('admin-inventory-table-body');
+        const countText = document.getElementById('admin-inv-count-text');
+
+        if (!grid && !tbody) return;
 
         const isHindi = this.state.adminLanguage === 'hi';
         const t = this.adminI18n[this.state.adminLanguage || 'en'] || this.adminI18n.en;
 
-        // Update Inventory Table Headers if present
-        const invHead = document.querySelector('#admin-inventory-tab thead tr');
-        if (invHead) {
-            invHead.innerHTML = `
-                <th>${isHindi ? 'फोटो' : 'Image'}</th>
-                <th>${t.colProdName}</th>
-                <th>${t.colCategory}</th>
-                <th>${t.colPrice}</th>
-                <th>${t.colStock}</th>
-                <th>${isHindi ? 'कार्रवाई' : 'Actions'}</th>
-            `;
+        // Filter products based on search and category
+        const catFilter = this.state.inventoryCategoryFilter || 'all';
+        const query = (this.state.inventorySearchQuery || '').toLowerCase();
+
+        const filtered = this.state.products.filter(prod => {
+            const matchesCat = catFilter === 'all' || prod.category === catFilter;
+            const displayName = this.getVegName(prod.name).toLowerCase();
+            const rawName = (prod.name || '').toLowerCase();
+            const matchesSearch = !query || rawName.includes(query) || displayName.includes(query) || (prod.category || '').includes(query) || String(prod.price).includes(query);
+            return matchesCat && matchesSearch;
+        });
+
+        // Summary count updates
+        if (countText) {
+            const lowStockCount = this.state.products.filter(p => p.stock > 0 && p.stock < 10).length;
+            const outOfStockCount = this.state.products.filter(p => p.stock <= 0).length;
+            if (isHindi) {
+                countText.textContent = `कुल ${filtered.length} सब्ज़ियाँ • ${lowStockCount} कम स्टॉक • ${outOfStockCount} समाप्त`;
+            } else {
+                countText.textContent = `Showing ${filtered.length} of ${this.state.products.length} produce items (${lowStockCount} low stock, ${outOfStockCount} out of stock)`;
+            }
         }
 
-        this.state.products.forEach(prod => {
-            const tr = document.createElement('tr');
-            const displayName = this.getVegName(prod.name);
-            const displayUnit = this.formatDisplayQuantity(prod.unit, 1);
-            tr.innerHTML = `
-                <td><img class="table-img" src="${prod.image}" alt="${prod.name}"></td>
-                <td>
-                    <div style="font-weight:700;">${this.escapeHTML(displayName)}</div>
-                    ${isHindi && displayName !== prod.name ? `<div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHTML(prod.name)}</div>` : ''}
-                </td>
-                <td><span class="category-chip active" style="font-size:0.75rem; padding:4px 8px;">${prod.category}</span></td>
-                <td>₹${prod.price} / ${displayUnit}</td>
-                <td>
-                    <span style="font-weight:700; color: ${prod.stock < 10 ? '#cc4d29' : 'inherit'}">
-                        ${prod.stock}
-                    </span> ${isHindi ? 'यूनिट' : 'units'}
-                </td>
-                <td>
-                    <div class="table-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="app.editProduct('${prod.id}')">${t.btnEdit}</button>
-                        <button class="btn btn-danger btn-sm" onclick="app.deleteProduct('${prod.id}')">${t.btnDelete}</button>
+        // 1. RENDER GRID VIEW
+        if (grid) {
+            grid.innerHTML = '';
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 36px 16px; color: var(--text-muted);">
+                        <span class="material-symbols-outlined" style="font-size: 3rem; opacity: 0.5;">search_off</span>
+                        <p style="margin: 8px 0 0; font-size: 0.95rem; font-weight: 600;">No vegetables found matching your filters</p>
                     </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
+                `;
+            } else {
+                filtered.forEach(prod => {
+                    const card = document.createElement('div');
+                    card.className = 'admin-prod-grid-card';
+
+                    const displayName = this.getVegName(prod.name);
+                    const displayUnit = this.formatDisplayQuantity(prod.unit, 1);
+
+                    let stockBadgeClass = 'in-stock';
+                    let stockBadgeLabel = isHindi ? `स्टॉक: ${prod.stock}` : `In Stock: ${prod.stock}`;
+                    if (prod.stock <= 0) {
+                        stockBadgeClass = 'out-of-stock';
+                        stockBadgeLabel = isHindi ? 'स्टॉक समाप्त' : 'Out of Stock';
+                    } else if (prod.stock < 10) {
+                        stockBadgeClass = 'low-stock';
+                        stockBadgeLabel = isHindi ? `कम: केवल ${prod.stock}` : `Low: ${prod.stock}`;
+                    }
+
+                    // Format Category Name
+                    const catLabels = {
+                        daily: isHindi ? 'डेली' : 'Daily',
+                        leafy: isHindi ? 'हरी पत्तेदार' : 'Leafy',
+                        root: isHindi ? 'जड़ / कंद' : 'Root',
+                        exotic: isHindi ? 'विदेशी / खास' : 'Exotic'
+                    };
+                    const catDisplay = catLabels[prod.category] || prod.category;
+
+                    card.innerHTML = `
+                        <div class="admin-prod-grid-img-wrap">
+                            <img src="${prod.image}" alt="${prod.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop&q=60'">
+                            <div class="admin-card-badges">
+                                <span class="admin-badge-cat">${catDisplay}</span>
+                                <span class="admin-badge-stock ${stockBadgeClass}">${stockBadgeLabel}</span>
+                            </div>
+                        </div>
+                        <div class="admin-prod-grid-body">
+                            <div>
+                                <h4 class="admin-prod-grid-title">${this.escapeHTML(displayName)}</h4>
+                                ${isHindi && displayName !== prod.name ? `<p class="admin-prod-grid-subtitle">${this.escapeHTML(prod.name)}</p>` : ''}
+                            </div>
+                            
+                            <div class="admin-prod-grid-price-row">
+                                <div class="admin-prod-grid-price">₹${prod.price} <span class="admin-prod-grid-unit">/ ${displayUnit}</span></div>
+                            </div>
+
+                            <div class="admin-stock-control">
+                                <span class="admin-stock-control-label">${isHindi ? 'स्टॉक मात्रा' : 'Stock Level'}:</span>
+                                <div class="stock-stepper-btn-group">
+                                    <button type="button" class="stock-step-btn" onclick="app.quickAdjustStock('${prod.id}', -5)" title="-5 units">-5</button>
+                                    <button type="button" class="stock-step-btn" onclick="app.quickAdjustStock('${prod.id}', -1)" title="-1 unit">-</button>
+                                    <span class="stock-val-display" style="color:${prod.stock < 10 ? '#cc4d29' : 'inherit'}">${prod.stock}</span>
+                                    <button type="button" class="stock-step-btn" onclick="app.quickAdjustStock('${prod.id}', 1)" title="+1 unit">+</button>
+                                    <button type="button" class="stock-step-btn" onclick="app.quickAdjustStock('${prod.id}', 5)" title="+5 units">+5</button>
+                                </div>
+                            </div>
+
+                            <div class="admin-prod-grid-actions">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="app.editProduct('${prod.id}')">
+                                    <span class="material-symbols-outlined" style="font-size: 0.95rem;">edit</span> ${t.btnEdit}
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="app.deleteProduct('${prod.id}')">
+                                    <span class="material-symbols-outlined" style="font-size: 0.95rem;">delete</span> ${t.btnDelete}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        // 2. RENDER TABLE VIEW (FALLBACK)
+        if (tbody) {
+            tbody.innerHTML = '';
+            const invHead = document.querySelector('#admin-inventory-tab thead tr');
+            if (invHead) {
+                invHead.innerHTML = `
+                    <th>${isHindi ? 'फोटो' : 'Image'}</th>
+                    <th>${t.colProdName}</th>
+                    <th>${t.colCategory}</th>
+                    <th>${t.colPrice}</th>
+                    <th>${t.colStock}</th>
+                    <th>${isHindi ? 'कार्रवाई' : 'Actions'}</th>
+                `;
+            }
+
+            filtered.forEach(prod => {
+                const tr = document.createElement('tr');
+                const displayName = this.getVegName(prod.name);
+                const displayUnit = this.formatDisplayQuantity(prod.unit, 1);
+                tr.innerHTML = `
+                    <td><img class="table-img" src="${prod.image}" alt="${prod.name}"></td>
+                    <td>
+                        <div style="font-weight:700;">${this.escapeHTML(displayName)}</div>
+                        ${isHindi && displayName !== prod.name ? `<div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHTML(prod.name)}</div>` : ''}
+                    </td>
+                    <td><span class="category-chip active" style="font-size:0.75rem; padding:4px 8px;">${prod.category}</span></td>
+                    <td>₹${prod.price} / ${displayUnit}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-weight:700; color: ${prod.stock < 10 ? '#cc4d29' : 'inherit'}">
+                                ${prod.stock}
+                            </span> ${isHindi ? 'यूनिट' : 'units'}
+                            <div class="stock-stepper-btn-group" style="margin-left:4px;">
+                                <button type="button" class="stock-step-btn" onclick="app.quickAdjustStock('${prod.id}', -1)">-</button>
+                                <button type="button" class="stock-step-btn" onclick="app.quickAdjustStock('${prod.id}', 1)">+</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="app.editProduct('${prod.id}')">${t.btnEdit}</button>
+                            <button class="btn btn-danger btn-sm" onclick="app.deleteProduct('${prod.id}')">${t.btnDelete}</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    },
+
+    // Quick Helpers for Registering Supply Form
+    setQuickUnit(unitStr) {
+        const input = document.getElementById('prod-unit');
+        if (!input) return;
+        input.value = unitStr;
+        input.focus();
+
+        const pills = document.querySelectorAll('#unit-quick-pills .quick-pill');
+        pills.forEach(p => {
+            if (p.textContent.trim().toLowerCase() === unitStr.toLowerCase() || p.getAttribute('onclick')?.includes(`'${unitStr}'`)) {
+                p.classList.add('active');
+            } else {
+                p.classList.remove('active');
+            }
         });
+    },
+
+    setQuickStock(stockVal) {
+        const input = document.getElementById('prod-stock');
+        if (!input) return;
+        input.value = stockVal;
+        input.focus();
+
+        const pills = document.querySelectorAll('#stock-quick-pills .quick-pill');
+        pills.forEach(p => {
+            if (p.textContent.trim() === String(stockVal)) {
+                p.classList.add('active');
+            } else {
+                p.classList.remove('active');
+            }
+        });
+    },
+
+    // ----------------------------------------------------
+    // DAILY RATE CARD & PRICE SHEET GENERATOR
+    // ----------------------------------------------------
+    openRateCardModal() {
+        const modal = document.getElementById('admin-ratecard-modal-overlay');
+        if (!modal) return;
+
+        // Set default date to today YYYY-MM-DD
+        const dateInput = document.getElementById('ratecard-custom-date');
+        if (dateInput && !dateInput.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        const noteInput = document.getElementById('ratecard-header-note');
+        if (noteInput && !noteInput.value) {
+            noteInput.value = '🌾 100% Farm-Fresh Harvest • Morning 6:30-8:30 AM Doorstep Delivery';
+        }
+
+        this.refreshRateCardPreview();
+        modal.classList.remove('hidden');
+    },
+
+    refreshRateCardPreview() {
+        const preview = document.getElementById('ratecard-preview-sheet');
+        if (!preview) return;
+
+        const dateInput = document.getElementById('ratecard-custom-date');
+        const noteInput = document.getElementById('ratecard-header-note');
+        const hideOos = document.getElementById('ratecard-hide-oos')?.checked;
+
+        // Format dates
+        let dateObj = new Date();
+        if (dateInput && dateInput.value) {
+            dateObj = new Date(dateInput.value + 'T00:00:00');
+        }
+
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayNamesHi = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthNamesHi = ['जनवरी', 'फरवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितम्बर', 'अक्टूबर', 'नवम्बर', 'दिसम्बर'];
+
+        const dayName = dayNames[dateObj.getDay()];
+        const dayNameHi = dayNamesHi[dateObj.getDay()];
+        const dateFormatted = `${String(dateObj.getDate()).padStart(2, '0')} ${monthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+
+        const customNote = noteInput ? noteInput.value.trim() : '';
+
+        // Filter products
+        let items = this.state.products;
+        if (hideOos) {
+            items = items.filter(p => p.stock > 0);
+        }
+
+        // Group into 4 categories
+        const categories = [
+            { id: 'daily', titleEn: 'Daily Essentials', titleHi: 'दैनिक सब्ज़ियाँ (Daily Essentials)', icon: '🥕' },
+            { id: 'leafy', titleEn: 'Leafy Greens', titleHi: 'हरी पत्तेदार सब्ज़ियाँ (Leafy Greens)', icon: '🥬' },
+            { id: 'root', titleEn: 'Roots & Tubers', titleHi: 'जड़ व कंदमूल (Roots & Tubers)', icon: '🥔' },
+            { id: 'exotic', titleEn: 'Exotic Harvest', titleHi: 'विदेशी व विशेष सब्ज़ियाँ (Exotic)', icon: '🥦' }
+        ];
+
+        let catSectionsHtml = '';
+
+        categories.forEach(cat => {
+            const catProds = items.filter(p => p.category === cat.id);
+            if (catProds.length === 0) return;
+
+            let rowsHtml = '';
+            catProds.forEach(prod => {
+                const hiName = this.vegetableHindiMap[prod.name] || this.getVegName(prod.name);
+                const displayUnit = this.formatDisplayQuantity(prod.unit, 1);
+                rowsHtml += `
+                    <tr>
+                        <td>
+                            <div class="ratecard-prod-row-flex">
+                                <img class="ratecard-prod-thumb" src="${prod.image}" alt="${prod.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop&q=60'">
+                                <div>
+                                    <div class="ratecard-item-name">${this.escapeHTML(prod.name)}</div>
+                                    <div class="ratecard-item-name-hi">${this.escapeHTML(hiName)}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="ratecard-item-unit">${displayUnit}</td>
+                        <td class="ratecard-item-price">₹${prod.price}</td>
+                    </tr>
+                `;
+            });
+
+            catSectionsHtml += `
+                <div class="ratecard-cat-section">
+                    <div class="ratecard-cat-header">
+                        <span>${cat.icon}</span> ${cat.titleHi}
+                    </div>
+                    <table class="ratecard-items-table">
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        });
+
+        preview.innerHTML = `
+            <div class="ratecard-header-banner">
+                <div>
+                    <h2 class="ratecard-brand-title">🌿 Gudiya's Mart</h2>
+                    <p class="ratecard-brand-tagline">Fresh Farm Produce • Daily Price Card (दैनिक सब्ज़ी भाव सूची)</p>
+                </div>
+                <div class="ratecard-date-badge">
+                    <p class="ratecard-date-text">📅 ${dateFormatted}</p>
+                    <p class="ratecard-date-sub">${dayNameHi} (${dayName})</p>
+                </div>
+            </div>
+
+            ${customNote ? `<div class="ratecard-promo-banner">${this.escapeHTML(customNote)}</div>` : ''}
+
+            <div class="ratecard-table-grid">
+                ${catSectionsHtml || '<p style="grid-column: 1 / -1; text-align:center; padding: 20px; color:#888;">No active items in stock.</p>'}
+            </div>
+
+            <div class="ratecard-footer-banner">
+                <div class="ratecard-footer-order-info">
+                    <span>🚚 Delivery Slot: 6:30 AM – 8:30 AM</span>
+                </div>
+                <div>
+                    <strong>📲 Order Online:</strong> gudiyamart.in &nbsp;|&nbsp; <strong>📞 WhatsApp:</strong> +91 7672048441
+                </div>
+            </div>
+        `;
+    },
+
+    // Download high-resolution PNG Rate Card with Vegetable Photos
+    async downloadRateCardImage() {
+        this.showToast("Generating Rate Card image with photos...", "info");
+
+        const dateInput = document.getElementById('ratecard-custom-date');
+        const noteInput = document.getElementById('ratecard-header-note');
+        const hideOos = document.getElementById('ratecard-hide-oos')?.checked;
+
+        let dateObj = new Date();
+        if (dateInput && dateInput.value) {
+            dateObj = new Date(dateInput.value + 'T00:00:00');
+        }
+
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayNamesHi = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        const dateString = `${String(dateObj.getDate()).padStart(2, '0')}-${monthNames[dateObj.getMonth()]}-${dateObj.getFullYear()}`;
+        const dayName = `${dayNamesHi[dateObj.getDay()]} (${dayNames[dateObj.getDay()]})`;
+        const customNote = noteInput ? noteInput.value.trim() : '🌾 100% Farm-Fresh Harvest • Morning Doorstep Delivery';
+
+        let items = this.state.products;
+        if (hideOos) items = items.filter(p => p.stock > 0);
+
+        // Preload Images
+        const imageMap = {};
+        const loadImage = (prod) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    imageMap[prod.id] = img;
+                    resolve();
+                };
+                img.onerror = () => {
+                    resolve();
+                };
+                img.src = prod.image || 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop&q=60';
+            });
+        };
+
+        await Promise.all(items.map(p => loadImage(p)));
+
+        // Group into 2 visual columns
+        const col1Prods = items.filter(p => p.category === 'daily' || p.category === 'root');
+        const col2Prods = items.filter(p => p.category === 'leafy' || p.category === 'exotic');
+
+        const maxRows = Math.max(col1Prods.length, col2Prods.length, 1);
+
+        // Canvas Dimensions (Crisp 2x scaling)
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const width = 1200;
+        const rowHeight = 54; // taller to accommodate photos nicely
+        const headerHeight = 150;
+        const noteHeight = customNote ? 48 : 0;
+        const footerHeight = 90;
+        const padding = 40;
+
+        const bodyHeight = (maxRows * rowHeight) + 90;
+        const height = headerHeight + noteHeight + bodyHeight + footerHeight + (padding * 2);
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Background
+        ctx.fillStyle = '#FDFDF9';
+        ctx.fillRect(0, 0, width, height);
+
+        // Outer Border
+        ctx.strokeStyle = '#2E7D32';
+        ctx.lineWidth = 10;
+        ctx.strokeRect(5, 5, width - 10, height - 10);
+
+        // Header Background Gradient
+        const headerGrad = ctx.createLinearGradient(0, 0, width, 0);
+        headerGrad.addColorStop(0, '#1B5E20');
+        headerGrad.addColorStop(1, '#2E7D32');
+        ctx.fillStyle = headerGrad;
+        ctx.fillRect(10, 10, width - 20, headerHeight);
+
+        // Header Brand Title
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 44px Georgia, serif';
+        ctx.fillText("🌿 Gudiya's Mart", padding, 75);
+
+        ctx.fillStyle = '#C8E6C9';
+        ctx.font = '500 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText("Fresh Farm Produce • Daily Rate Card (दैनिक ताज़ा सब्ज़ी भाव सूची)", padding, 115);
+
+        // Header Date Box
+        const dateBoxW = 280;
+        const dateBoxH = 80;
+        const dateBoxX = width - padding - dateBoxW;
+        const dateBoxY = 45;
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.beginPath();
+        ctx.roundRect(dateBoxX, dateBoxY, dateBoxW, dateBoxH, 16);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`📅 ${dateString}`, dateBoxX + dateBoxW / 2, dateBoxY + 34);
+
+        ctx.fillStyle = '#E8F5E9';
+        ctx.font = '16px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText(dayName, dateBoxX + dateBoxW / 2, dateBoxY + 62);
+        ctx.textAlign = 'left';
+
+        // Announcement Banner
+        let currentY = headerHeight + 10;
+        if (customNote) {
+            ctx.fillStyle = '#FFF8E1';
+            ctx.fillRect(10, currentY, width - 20, noteHeight);
+            ctx.strokeStyle = '#FFE082';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(10, currentY, width - 20, noteHeight);
+
+            ctx.fillStyle = '#795548';
+            ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(customNote, width / 2, currentY + 31);
+            ctx.textAlign = 'left';
+            currentY += noteHeight;
+        }
+
+        // Draw Column 1 and Column 2
+        const colW = (width - (padding * 2) - 40) / 2;
+        const col1X = padding;
+        const col2X = padding + colW + 40;
+
+        const drawSection = (x, y, title, prods) => {
+            // Section Header
+            ctx.fillStyle = '#E8F5E9';
+            ctx.fillRect(x, y, colW, 42);
+            ctx.strokeStyle = '#C8E6C9';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x, y, colW, 42);
+
+            ctx.fillStyle = '#1B5E20';
+            ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText(title, x + 16, y + 27);
+
+            // Column Titles
+            ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = '#2E7D32';
+            ctx.textAlign = 'right';
+            ctx.fillText("RATE / इकाई", x + colW - 16, y + 27);
+            ctx.textAlign = 'left';
+
+            let rowY = y + 42;
+            prods.forEach((prod, idx) => {
+                // Zebra stripe
+                ctx.fillStyle = idx % 2 === 0 ? '#FFFFFF' : '#F9F9F6';
+                ctx.fillRect(x, rowY, colW, rowHeight);
+                ctx.strokeStyle = '#ECEBE4';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x, rowY, colW, rowHeight);
+
+                // Draw Vegetable Photo Thumbnail
+                const img = imageMap[prod.id];
+                const thumbSize = 40;
+                const thumbX = x + 10;
+                const thumbY = rowY + 7;
+
+                if (img) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.roundRect(thumbX, thumbY, thumbSize, thumbSize, 6);
+                    ctx.clip();
+                    ctx.drawImage(img, thumbX, thumbY, thumbSize, thumbSize);
+                    ctx.restore();
+                    ctx.strokeStyle = '#D8D4CA';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(thumbX, thumbY, thumbSize, thumbSize);
+                } else {
+                    // Fallback initial badge
+                    ctx.fillStyle = '#E8F5E9';
+                    ctx.beginPath();
+                    ctx.roundRect(thumbX, thumbY, thumbSize, thumbSize, 6);
+                    ctx.fill();
+                    ctx.fillStyle = '#2E7D32';
+                    ctx.font = 'bold 18px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🥦', thumbX + thumbSize / 2, thumbY + 26);
+                    ctx.textAlign = 'left';
+                }
+
+                const hiName = this.vegetableHindiMap[prod.name] || this.getVegName(prod.name);
+                const displayUnit = this.formatDisplayQuantity(prod.unit, 1);
+                const textStartX = x + thumbSize + 22;
+
+                // Prod Name
+                ctx.fillStyle = '#222222';
+                ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText(prod.name, textStartX, rowY + 24);
+
+                ctx.fillStyle = '#666666';
+                ctx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText(hiName, textStartX, rowY + 44);
+
+                // Price and Unit
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#1B5E20';
+                ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText(`₹${prod.price}`, x + colW - 16, rowY + 27);
+
+                ctx.fillStyle = '#777777';
+                ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText(`per ${displayUnit}`, x + colW - 16, rowY + 44);
+                ctx.textAlign = 'left';
+
+                rowY += rowHeight;
+            });
+        };
+
+        const tableStartY = currentY + 30;
+        drawSection(col1X, tableStartY, "🥕 DAILY ESSENTIALS & ROOTS", col1Prods);
+        drawSection(col2X, tableStartY, "🥬 LEAFY GREENS & EXOTIC HARVEST", col2Prods);
+
+        // Footer Banner
+        const footY = height - footerHeight - 10;
+        ctx.fillStyle = '#1B5E20';
+        ctx.fillRect(10, footY, width - 20, footerHeight);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText("🚚 Morning Delivery: 6:30 AM – 8:30 AM (ताज़ी सब्ज़ियाँ रोज़ सुबह)", padding, footY + 36);
+
+        ctx.fillStyle = '#C8E6C9';
+        ctx.font = '16px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText("📲 Order Online: gudiyamart.in  |  📞 WhatsApp Orders: +91 7672048441", padding, footY + 64);
+
+        // Trigger Instant PNG Download
+        try {
+            const link = document.createElement('a');
+            link.download = `Gudiyas_Mart_Daily_Rate_Card_${dateString}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            this.showToast(`Rate card image with photos downloaded for ${dateString}!`, 'success');
+        } catch (e) {
+            console.error("Canvas export fallback:", e);
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = `Gudiyas_Mart_Daily_Rate_Card_${dateString}.png`;
+                    link.href = url;
+                    link.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    this.showToast(`Rate card image downloaded for ${dateString}!`, 'success');
+                }
+            }, 'image/png');
+        }
+    },
+
+    // Share formatted daily rates to WhatsApp
+    shareRateCardWhatsApp() {
+        const text = this.getFormattedRateCardText();
+        const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+        window.open(waUrl, '_blank');
+    },
+
+    // Copy formatted daily rates to clipboard
+    copyRateCardText() {
+        const text = this.getFormattedRateCardText();
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.showToast("Daily Rate Card text copied to clipboard!", "success");
+            });
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            this.showToast("Daily Rate Card text copied to clipboard!", "success");
+        }
+    },
+
+    getFormattedRateCardText() {
+        const dateInput = document.getElementById('ratecard-custom-date');
+        const noteInput = document.getElementById('ratecard-header-note');
+        const hideOos = document.getElementById('ratecard-hide-oos')?.checked;
+
+        let dateObj = new Date();
+        if (dateInput && dateInput.value) {
+            dateObj = new Date(dateInput.value + 'T00:00:00');
+        }
+
+        const dayNamesHi = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+        const dayNameHi = dayNamesHi[dateObj.getDay()];
+        const dateFormatted = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
+        const customNote = noteInput ? noteInput.value.trim() : '';
+
+        let items = this.state.products;
+        if (hideOos) items = items.filter(p => p.stock > 0);
+
+        let lines = [
+            `🌿 *गुड़िया मार्ट (Gudiya's Mart) - आज का ताज़ा सब्ज़ी भाव* 🌿`,
+            `📅 *दिनांक:* ${dateFormatted} (${dayNameHi})`,
+            `-----------------------------------`
+        ];
+
+        if (customNote) {
+            lines.push(`📢 *विशेष सूचना:* ${customNote}`);
+            lines.push(`-----------------------------------`);
+        }
+
+        const categories = [
+            { id: 'daily', title: '🥕 *दैनिक सब्ज़ियाँ (Daily Essentials):*' },
+            { id: 'leafy', title: '🥬 *हरी पत्तेदार सब्ज़ियाँ (Leafy Greens):*' },
+            { id: 'root', title: '🥔 *आलू व जड़ें (Roots & Tubers):*' },
+            { id: 'exotic', title: '🥦 *विदेशी व खास (Exotic):*' }
+        ];
+
+        categories.forEach(cat => {
+            const catProds = items.filter(p => p.category === cat.id);
+            if (catProds.length === 0) return;
+
+            lines.push(`\n${cat.title}`);
+            catProds.forEach(prod => {
+                const hiName = this.vegetableHindiMap[prod.name] || this.getVegName(prod.name);
+                const displayUnit = this.formatDisplayQuantity(prod.unit, 1);
+                lines.push(`• ${hiName} - *₹${prod.price}* / ${displayUnit}`);
+            });
+        });
+
+        lines.push(`\n-----------------------------------`);
+        lines.push(`🚚 *डिलीवरी समय:* सुबह 6:30 AM - 8:30 AM`);
+        lines.push(`🛒 *ऑनलाइन ऑर्डर करें:* gudiyamart.in`);
+        lines.push(`📞 *व्हाट्सएप ऑर्डर / सहायता:* +91 7672048441`);
+        lines.push(`🌾 *100% ताज़ी व शुद्ध सब्ज़ियाँ सीधे आपके दरवाज़े पर!*`);
+
+        return lines.join('\n');
+    },
+
+    printRateCard() {
+        window.print();
     },
 
     // Load Product details inside Form for updates
