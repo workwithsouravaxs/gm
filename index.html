@@ -818,7 +818,17 @@
                                         </h3>
                                         <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0;">Add new farm produce or update prices, units, and harvest stock levels</p>
                                     </div>
-                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                        <input type="file" id="admin-csv-file-input" accept=".csv" style="display: none;" onchange="app.handleCSVUpload(event)">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('admin-csv-file-input').click()" style="padding: 6px 12px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px;" title="Upload your inventory spreadsheet (Auto-cleans currency symbols & units)">
+                                            <span class="material-symbols-outlined" style="font-size: 1rem;">upload_file</span> Import CSV
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="app.downloadCSVTemplate()" style="padding: 6px 12px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px;" title="Download sample inventory CSV sheet">
+                                            <span class="material-symbols-outlined" style="font-size: 1rem;">description</span> Template
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="app.exportInventoryToCSV()" style="padding: 6px 12px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px;" title="Export current catalog as CSV">
+                                            <span class="material-symbols-outlined" style="font-size: 1rem;">download</span> Export
+                                        </button>
                                         <button type="button" class="btn btn-secondary btn-sm" onclick="app.forceSyncInventoryToSupabase()" style="padding: 6px 12px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; border-color: var(--primary); color: var(--primary);">
                                             <span class="material-symbols-outlined" style="font-size: 1rem;">cloud_upload</span> Sync DB
                                         </button>

@@ -545,6 +545,229 @@ const app = {
         }
     },
 
+    // Download Sample CSV Template with valid numeric format
+    downloadCSVTemplate() {
+        const headers = ["id", "name", "category", "unit", "price", "stock", "sales", "step", "image"];
+        const sampleRows = [
+            ["v1", "Desi Tomatoes (Tamatar)", "daily", "1 kg", "40", "120", "0", "0.5", "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=80"],
+            ["v2", "Pahadi Potatoes (Aloo)", "root", "1 kg", "30", "250", "0", "0.5", "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=80"],
+            ["v3", "Organic Spinach (Palak)", "leafy", "1 bunch", "20", "65", "0", "1", "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=500&auto=format&fit=crop&q=80"],
+            ["v4", "Fresh Cauliflower (Gobhi)", "daily", "1 pc", "45", "40", "0", "1", "https://images.unsplash.com/photo-1568584711075-3d021a7c3ca3?w=500&auto=format&fit=crop&q=80"],
+            ["v5", "Organic Broccoli", "exotic", "500g", "60", "30", "0", "1", "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?w=500&auto=format&fit=crop&q=80"]
+        ];
+
+        let csvContent = headers.join(",") + "\n";
+        sampleRows.forEach(row => {
+            csvContent += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",") + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `GudiyaMart_Inventory_Template.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        this.showToast("Sample Inventory CSV template downloaded!", "success");
+    },
+
+    // Export current inventory to CSV
+    exportInventoryToCSV() {
+        const headers = ["id", "name", "category", "unit", "price", "stock", "sales", "step", "image"];
+        let csvContent = headers.join(",") + "\n";
+        this.state.products.forEach(p => {
+            const row = [
+                p.id,
+                p.name,
+                p.category,
+                p.unit,
+                p.price, // pure number
+                p.stock, // pure number
+                p.sales || 0,
+                p.step || 1,
+                p.image || ''
+            ];
+            csvContent += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",") + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `GudiyaMart_Active_Inventory_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        this.showToast("Active inventory exported to CSV!", "success");
+    },
+
+    // Smart CSV File Upload: Sanitizes currency symbols, units, and non-numeric characters to prevent 22P02 numeric errors
+    async handleCSVUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Reset file input for re-upload
+        event.target.value = '';
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target.result;
+            try {
+                const lines = text.split(/\r\n|\n/).filter(line => line.trim().length > 0);
+                if (lines.length < 2) {
+                    this.showToast("CSV file is empty or has no data rows.", "error");
+                    return;
+                }
+
+                // Parse CSV rows handling quotes
+                const parseCSVLine = (line) => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"') {
+                            if (inQuotes && line[i + 1] === '"') {
+                                current += '"';
+                                i++;
+                            } else {
+                                inQuotes = !inQuotes;
+                            }
+                        } else if (char === ',' && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                };
+
+                const rawHeaders = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
+                
+                // Column index mapping
+                const colIdx = {
+                    id: rawHeaders.findIndex(h => h === 'id' || h === 'productid' || h === 'code'),
+                    name: rawHeaders.findIndex(h => h === 'name' || h === 'producename' || h === 'item' || h === 'title'),
+                    category: rawHeaders.findIndex(h => h === 'category' || h === 'cat' || h === 'type'),
+                    unit: rawHeaders.findIndex(h => h === 'unit' || h === 'sellingunit' || h === 'weight' || h === 'measure'),
+                    price: rawHeaders.findIndex(h => h === 'price' || h === 'rate' || h === 'cost' || h === 'mrp'),
+                    stock: rawHeaders.findIndex(h => h === 'stock' || h === 'quantity' || h === 'qty' || h === 'quantitysourced'),
+                    sales: rawHeaders.findIndex(h => h === 'sales' || h === 'totalorders'),
+                    step: rawHeaders.findIndex(h => h === 'step' || h === 'increment'),
+                    image: rawHeaders.findIndex(h => h === 'image' || h === 'imageurl' || h === 'photo' || h === 'img')
+                };
+
+                // Fallback column positions if header mapping failed
+                if (colIdx.name === -1 && rawHeaders.length >= 2) colIdx.name = 1;
+                if (colIdx.price === -1 && rawHeaders.length >= 5) colIdx.price = 4;
+                if (colIdx.stock === -1 && rawHeaders.length >= 6) colIdx.stock = 5;
+
+                // Numeric sanitizer function: strips currency symbols (₹, Rs, Rs.), commas, slashes, and units
+                const cleanNumber = (val, defaultVal = 0) => {
+                    if (val === undefined || val === null) return defaultVal;
+                    const cleanStr = String(val)
+                        .replace(/[₹$€£]/g, '')
+                        .replace(/rs\.?/gi, '')
+                        .replace(/inr/gi, '')
+                        .replace(/\/.*$/g, '') // remove "/kg" or "/bunch"
+                        .replace(/[a-zA-Z]/g, '') // remove "kg", "gm", "pcs"
+                        .replace(/,/g, '')
+                        .trim();
+                    const num = parseFloat(cleanStr);
+                    return isNaN(num) ? defaultVal : num;
+                };
+
+                const importedProducts = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const row = parseCSVLine(lines[i]);
+                    if (row.length === 0 || !row.some(cell => cell.length > 0)) continue;
+
+                    const rawName = colIdx.name !== -1 ? row[colIdx.name] : row[1] || `Produce ${i}`;
+                    if (!rawName || rawName.trim().length === 0) continue;
+
+                    const rawId = (colIdx.id !== -1 && row[colIdx.id]) ? row[colIdx.id].trim() : `v-${Date.now().toString(36)}-${i}`;
+                    const rawCategory = (colIdx.category !== -1 && row[colIdx.category]) ? row[colIdx.category].toLowerCase().trim() : 'daily';
+                    const category = ['daily', 'leafy', 'root', 'exotic'].includes(rawCategory) ? rawCategory : 'daily';
+                    
+                    const unit = (colIdx.unit !== -1 && row[colIdx.unit]) ? row[colIdx.unit].trim() : '1 kg';
+                    const price = cleanNumber(colIdx.price !== -1 ? row[colIdx.price] : row[4], 30);
+                    const stock = cleanNumber(colIdx.stock !== -1 ? row[colIdx.stock] : row[5], 50);
+                    const sales = cleanNumber(colIdx.sales !== -1 ? row[colIdx.sales] : 0, 0);
+                    const step = cleanNumber(colIdx.step !== -1 ? row[colIdx.step] : 1, 1);
+                    const image = (colIdx.image !== -1 && row[colIdx.image] && row[colIdx.image].startsWith('http')) 
+                        ? row[colIdx.image].trim() 
+                        : 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=80';
+
+                    importedProducts.push({
+                        id: rawId,
+                        name: rawName,
+                        category,
+                        unit,
+                        price,
+                        stock,
+                        sales,
+                        step,
+                        image
+                    });
+                }
+
+                if (importedProducts.length === 0) {
+                    this.showToast("No valid produce items found in the CSV sheet.", "error");
+                    return;
+                }
+
+                this.showToast(`Importing and syncing ${importedProducts.length} items to database...`, "info");
+
+                // Merge with state
+                importedProducts.forEach(newP => {
+                    const existingIdx = this.state.products.findIndex(p => p.id === newP.id || p.name.toLowerCase() === newP.name.toLowerCase());
+                    if (existingIdx !== -1) {
+                        this.state.products[existingIdx] = { ...this.state.products[existingIdx], ...newP };
+                    } else {
+                        this.state.products.push(newP);
+                    }
+                });
+
+                this.saveToStorage();
+                this.renderShop(false);
+                this.renderAdminInventory();
+
+                // Direct upsert to Supabase with pure sanitized numeric data
+                let syncedCount = 0;
+                for (const prod of importedProducts) {
+                    const dbProd = {
+                        id: prod.id,
+                        name: prod.name,
+                        category: prod.category,
+                        unit: prod.unit,
+                        price: Number(prod.price), // Strict numeric
+                        stock: Number(prod.stock), // Strict numeric
+                        sales: Number(prod.sales || 0), // Strict numeric
+                        step: Number(prod.step || 1), // Strict numeric
+                        image: prod.image
+                    };
+
+                    const existing = await this.supabase.request(`gudiyamart_products?id=eq.${encodeURIComponent(prod.id)}`, 'GET');
+                    if (existing && Array.isArray(existing) && existing.length > 0) {
+                        await this.supabase.request(`gudiyamart_products?id=eq.${encodeURIComponent(prod.id)}`, 'PATCH', dbProd);
+                    } else {
+                        await this.supabase.request('gudiyamart_products', 'POST', dbProd);
+                    }
+                    syncedCount++;
+                }
+
+                this.showToast(`🎉 Successfully imported & synced ${syncedCount} produce items to Supabase!`, "success");
+
+            } catch (err) {
+                console.error("CSV Import error:", err);
+                this.showToast(`Failed to parse CSV: ${err.message}`, "error");
+            }
+        };
+
+        reader.readAsText(file);
+    },
+
     // Apply active theme to document body
     applyTheme() {
         document.documentElement.setAttribute('data-theme', this.state.theme);
