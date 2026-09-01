@@ -1181,11 +1181,29 @@ const app = {
 
         // 1. Check local state users first
         let user = this.state.users.find(u =>
-            (u.email.toLowerCase() === emailOrPhone || u.phone === emailOrPhone) &&
+            (u.email && u.email.toLowerCase() === emailOrPhone || u.phone === emailOrPhone) &&
             u.password === password
         );
 
-        // 2. Fallback: Check Supabase online if not found locally
+        // 2. Built-in Admin Account Fallback
+        if (!user && emailOrPhone === 'admin@gudiyamart.com' && password === 'admin123') {
+            user = {
+                id: 'u-admin-1',
+                name: 'Gudiya Mart Admin',
+                email: 'admin@gudiyamart.com',
+                phone: '9876543210',
+                address: 'Gudiya Mart Central Farm Hub',
+                password: 'admin123',
+                isAdmin: true,
+                isPromoMember: true,
+                joinedAt: new Date().toISOString()
+            };
+            if (!this.state.users.some(u => u.id === user.id)) {
+                this.state.users.push(user);
+            }
+        }
+
+        // 3. Fallback: Check Supabase online if not found locally
         if (!user && this.supabase.key && this.supabase.key !== "PLACEHOLDER_KEY") {
             this.showToast("Authenticating online...", "info");
 
