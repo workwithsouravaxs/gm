@@ -33,10 +33,7 @@ const app = {
                 if (body) {
                     config.body = JSON.stringify(body);
                 }
-                // Append cache-busting timestamp for GET requests to guarantee latest prices
-                const separator = endpoint.includes('?') ? '&' : '?';
-                const urlWithBuster = method === 'GET' ? `${this.url}/${endpoint}${separator}_ts=${Date.now()}` : `${this.url}/${endpoint}`;
-                const response = await fetch(urlWithBuster, config);
+                const response = await fetch(`${this.url}/${endpoint}`, config);
                 if (!response.ok) {
                     const errorMsg = await response.text();
                     throw new Error(`REST Error: ${response.status} - ${errorMsg}`);
@@ -1443,7 +1440,7 @@ const app = {
 
             card.innerHTML = `
                 <div class="product-image-container">
-                    <img class="product-image" src="${prod.image}" alt="${prod.name}" loading="lazy">
+                    <img class="product-image" src="${prod.image}" alt="${prod.name}" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=80'">
                     ${prod.sales > 60 ? `<span class="product-badge">Popular</span>` : ''}
                 </div>
                 <div class="product-info">
